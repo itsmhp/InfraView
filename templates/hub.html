@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Hub — InfraView{% endblock %}
+
+{% block content %}
+<div class="p-6 lg:p-8">
+    <!-- Hub Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-800">Dashboard Hub</h1>
+        <p class="text-slate-500 text-sm mt-1">Pilih dashboard untuk melihat data terbaru</p>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {% for d in dashboards %}
+        <a href="{{ url_for('main.view', slug=d.slug) }}"
+           class="group bg-white rounded-xl border border-slate-200 hover:border-teal-300 hover:shadow-lg transition-all duration-200 overflow-hidden">
+            <!-- Card Header -->
+            <div class="p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <span class="text-3xl">{{ d.icon }}</span>
+                    {% if d.has_content %}
+                    <span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                        Aktif
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1 text-xs bg-slate-50 text-slate-400 px-2 py-1 rounded-full">
+                        <span class="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+                        Belum ada data
+                    </span>
+                    {% endif %}
+                </div>
+                <h3 class="font-semibold text-slate-800 group-hover:text-teal-700 transition-colors">{{ d.name }}</h3>
+                <p class="text-sm text-slate-500 mt-1 line-clamp-2">{{ d.description }}</p>
+            </div>
+            <!-- Card Footer -->
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                <span>{{ d.updated_display }}</span>
+                {% if d.has_content %}
+                <span>{{ d.file_size_display }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if not dashboards %}
+    <div class="text-center py-16">
+        <div class="text-5xl mb-4">📊</div>
+        <h3 class="text-lg font-medium text-slate-600">Belum ada dashboard</h3>
+        <p class="text-slate-400 text-sm mt-1">Admin dapat menambahkan dashboard melalui panel admin</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

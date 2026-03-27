@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}InfraView{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: {
+                            600: '#0D9488',
+                            700: '#0F766E',
+                            800: '#115E59',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+    {% if current_user.is_authenticated %}
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-teal-600 to-teal-700 text-white px-6 py-3 sticky top-0 z-50 shadow-md">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" class="lg:hidden p-1 hover:bg-white/10 rounded">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <a href="{{ url_for('main.hub') }}" class="flex items-center gap-2 hover:opacity-90">
+                    <span class="text-xl font-bold tracking-wide">InfraView</span>
+                    <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">INF</span>
+                </a>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm opacity-90 hidden sm:inline" id="clock"></span>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm hidden sm:inline">{{ current_user.display_name }}</span>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.panel') }}" class="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition">Admin</a>
+                    {% endif %}
+                    <a href="{{ url_for('auth.logout') }}" class="text-xs bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex min-h-[calc(100vh-52px)]">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-60 bg-white border-r border-slate-200 shadow-sm fixed lg:static inset-y-0 left-0 top-[52px] z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
+            <div class="py-4">
+                <div class="px-5 py-2 text-xs font-bold uppercase text-slate-400 tracking-wider">Dashboards</div>
+                {% set dashboards_sidebar = get_sidebar_dashboards() if get_sidebar_dashboards is defined else [] %}
+                {% for d in dashboards_sidebar %}
+                <a href="{{ url_for('main.view', slug=d.slug) }}"
+                   class="sidebar-item flex items-center gap-3 px-5 py-3 border-l-3 border-transparent hover:bg-slate-50 hover:border-teal-500 transition-all text-sm {{ 'bg-teal-50 border-teal-600 text-teal-700 font-medium' if request.path == '/dashboard/' + d.slug else 'text-slate-600' }}">
+                    <span>{{ d.icon }}</span>
+                    <span>{{ d.name }}</span>
+                    {% if d.has_content %}
+                    <span class="ml-auto w-2 h-2 bg-emerald-400 rounded-full" title="Data tersedia"></span>
+                    {% else %}
+                    <span class="ml-auto w-2 h-2 bg-slate-300 rounded-full" title="Belum ada data"></span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay (mobile) -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/30 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="px-6 pt-4 space-y-2">
+                {% for category, message in messages %}
+                <div class="flash-msg px-4 py-3 rounded-lg text-sm flex items-center justify-between
+                    {{ 'bg-emerald-50 text-emerald-700 border border-emerald-200' if category == 'success' else
+                       'bg-red-50 text-red-700 border border-red-200' if category == 'error' else
+                       'bg-blue-50 text-blue-700 border border-blue-200' }}">
+                    <span>{{ message }}</span>
+                    <button onclick="this.parentElement.remove()" class="ml-2 opacity-60 hover:opacity-100">&times;</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% else %}
+    {% block content_noauth %}{% endblock %}
+    {% endif %}
+
+    <script>
+        // Clock
+        function updateClock() {
+            const el = document.getElementById('clock');
+            if (el) {
+                const now = new Date();
+                el.textContent = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'})
+                    + ' — ' + now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+            }
+        }
+        updateClock();
+        setInterval(updateClock, 30000);
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
+
+        // Auto-dismiss flash messages
+        setTimeout(() => {
+            document.querySelectorAll('.flash-msg').forEach(el => {
+                el.style.transition = 'opacity 0.3s';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            });
+        }, 4000);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+.venv/
+
+# Instance
+instance/
+*.db
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Analysis docs (not needed in production)
+*_complete_analysis.md
+plan.md
+
+# Existing local apps (not part of web app)
+laporan-cje0/
+Laporan-RKA-IT/
+
+# Existing HTML files (root level, not managed by Flask)
+Laporan_CJE0_*.html
+Dashboard_*.html
+migrate_confluence.py

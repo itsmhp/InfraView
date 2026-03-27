@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ dashboard.name }} — InfraView{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-[calc(100vh-52px)]">
+    <!-- Viewer Header -->
+    <div class="px-5 py-3 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('main.hub') }}" class="text-slate-400 hover:text-teal-600 transition" title="Kembali ke Hub">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </a>
+            <div>
+                <h2 class="font-semibold text-slate-800 text-sm">{{ dashboard.icon }} {{ dashboard.name }}</h2>
+                <span class="text-xs text-slate-400">{{ dashboard.updated_display }}</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            {% if dashboard.has_content %}
+            <button onclick="refreshDashboard()" class="text-xs text-slate-500 hover:text-teal-600 bg-slate-100 hover:bg-teal-50 px-3 py-1.5 rounded transition" title="Refresh">
+                <svg class="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Refresh
+            </button>
+            {% endif %}
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.upload', slug=dashboard.slug) }}" class="text-xs text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded transition">
+                Upload Baru
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    {% if dashboard.has_content %}
+    <div class="flex-1 relative">
+        <div id="loading-overlay" class="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+            <div class="text-center">
+                <div class="w-8 h-8 border-3 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto"></div>
+                <p class="text-sm text-slate-500 mt-2">Memuat dashboard...</p>
+            </div>
+        </div>
+        <iframe id="dashboard-frame"
+                src="{{ url_for('main.raw', slug=dashboard.slug) }}"
+                class="w-full h-full border-0"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation"
+                onload="hideLoading()">
+        </iframe>
+    </div>
+    {% else %}
+    <div class="flex-1 flex items-center justify-center">
+        <div class="text-center">
+            <div class="text-6xl mb-4">{{ dashboard.icon }}</div>
+            <h3 class="text-lg font-medium text-slate-600">Belum ada data</h3>
+            <p class="text-slate-400 text-sm mt-2">Dashboard ini belum memiliki file HTML.</p>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.upload', slug=dashboard.slug) }}"
+               class="inline-block mt-4 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm transition">
+                Upload HTML
+            </a>
+            {% else %}
+            <p class="text-slate-400 text-xs mt-4">Hubungi admin untuk mengupload data.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.style.transition = 'opacity 0.3s';
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 300);
+    }
+}
+function refreshDashboard() {
+    const frame = document.getElementById('dashboard-frame');
+    if (frame) frame.src = frame.src;
+}
+// Timeout fallback
+setTimeout(hideLoading, 5000);
+</script>
+{% endblock %}

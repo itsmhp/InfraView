@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analisis Status Pengadaan – INF 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg:       #070d1a;
+  --bg2:      #0c1528;
+  --card:     #101e36;
+  --card2:    #152040;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+
+  --blue:     #3b82f6;
+  --indigo:   #6366f1;
+  --cyan:     #06b6d4;
+  --emerald:  #10b981;
+  --amber:    #f59e0b;
+  --orange:   #f97316;
+  --rose:     #f43f5e;
+  --violet:   #8b5cf6;
+  --slate:    #64748b;
+  --muted:    #94a3b8;
+  --white:    #e2e8f0;
+
+  /* STATUS COLORS */
+  --s-belum:  #64748b;
+  --s-ip:     #8b5cf6;
+  --s-pengad: #3b82f6;
+  --s-spk:    #06b6d4;
+  --s-bayar:  #10b981;
+  --s-done:   #22c55e;
+  --s-drop:   #f43f5e;
+  --s-komite: #f97316;
+}
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--bg);
+  color: var(--white);
+  min-height: 100vh;
+}
+
+/* ── bg glow ── */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(59,130,246,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 100%, rgba(139,92,246,0.09) 0%, transparent 55%);
+}
+
+/* ── HEADER ── */
+.header {
+  padding:24px 36px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(12,21,40,0.8); backdrop-filter:blur(10px);
+  position:sticky; top:0; z-index:100;
+}
+.h-left { display:flex; align-items:center; gap:14px; }
+.h-logo {
+  background:linear-gradient(135deg,#1d4ed8,#4338ca);
+  border-radius:10px; padding:8px 14px;
+  font-weight:800; font-size:16px;
+  border:1px solid rgba(99,102,241,0.3);
+  box-shadow:0 0 20px rgba(59,130,246,0.2);
+}
+.h-text h1 { font-size:17px; font-weight:700; }
+.h-text p  { font-size:11px; color:var(--muted); margin-top:2px; font-family:'IBM Plex Mono',monospace; }
+.h-right { display:flex; gap:10px; align-items:center; }
+.h-pill {
+  background:rgba(255,255,255,0.05); border:1px solid var(--border2);
+  border-radius:20px; padding:5px 12px;
+  font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace;
+}
+.h-pill span { color:var(--white); font-weight:600; margin-left:4px; }
+
+/* ── TABS ── */
+.tabs {
+  display:flex; padding:0 36px;
+  background:rgba(12,21,40,0.5); border-bottom:1px solid var(--border);
+  gap:4px;
+}
+.tab {
+  padding:13px 22px; cursor:pointer; border:none; background:transparent;
+  font-family:'Sora',sans-serif; font-size:13px; font-weight:600;
+  color:var(--muted); border-bottom:2px solid transparent;
+  transition:all .2s; white-space:nowrap;
+}
+.tab:hover { color:var(--white); }
+.tab.on { color:var(--white); border-bottom-color:var(--blue); }
+.tab-n {
+  display:inline-flex; background:rgba(59,130,246,0.15);
+  color:#93c5fd; border-radius:20px; padding:1px 7px;
+  font-size:10px; margin-left:6px; font-weight:700;
+}
+.tab.on .tab-n { background:var(--blue); color:#fff; }
+
+/* ── CONTENT ── */
+.page { display:none; padding:28px 36px 48px; }
+.page.on { display:block; animation:up .3s ease; }
+@keyframes up { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+/* ── INSIGHT STRIP ── */
+.insight-strip {
+  background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(139,92,246,0.08));
+  border:1px solid rgba(59,130,246,0.2); border-radius:12px;
+  padding:14px 20px; margin-bottom:24px;
+  display:flex; gap:24px; flex-wrap:wrap;
+}
+.ins-item { display:flex; align-items:center; gap:8px; }
+.ins-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.ins-text { font-size:12px; color:var(--muted); }
+.ins-text strong { color:var(--white); font-weight:600; }
+
+/* ── KPI ROW ── */
+.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:24px; }
+.kpi {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:16px 18px; position:relative; overflow:hidden;
+  transition:transform .2s;
+}
+.kpi:hover { transform:translateY(-2px); }
+.kpi::after {
+  content:''; position:absolute; inset:0; border-radius:12px;
+  background:var(--accent-color,transparent); opacity:.05; pointer-events:none;
+}
+.kpi-top { display:flex; justify-content:space-between; align-items:flex-start; }
+.kpi-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); }
+.kpi-icon { font-size:18px; opacity:.6; }
+.kpi-val  { font-size:24px; font-weight:800; font-family:'IBM Plex Mono',monospace; margin:8px 0 4px; }
+.kpi-sub  { font-size:11px; color:var(--muted); }
+.kpi-bar  { height:2px; border-radius:99px; margin-top:12px; }
+
+/* ── SECTION LABEL ── */
+.section {
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+  color:var(--slate); display:flex; align-items:center; gap:10px; margin-bottom:14px;
+}
+.section::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── GRID ── */
+.g2  { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+.g3  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:18px; }
+.g21 { display:grid; grid-template-columns:2fr 1fr; gap:18px; margin-bottom:18px; }
+.g12 { display:grid; grid-template-columns:1fr 2fr; gap:18px; margin-bottom:18px; }
+.span2 { grid-column:span 2; }
+
+/* ── CARD ── */
+.card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:20px;
+}
+.card-title {
+  font-size:12px; font-weight:700; color:var(--white);
+  margin-bottom:16px; display:flex; align-items:center; gap:7px;
+}
+.card-title .dot { width:7px; height:7px; border-radius:50%; }
+
+/* ── FUNNEL ── */
+.funnel { display:flex; flex-direction:column; gap:7px; }
+.funnel-row {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:8px;
+  background:rgba(255,255,255,0.025); border:1px solid var(--border);
+  cursor:default; transition:background .2s;
+}
+.funnel-row:hover { background:rgba(255,255,255,0.05); }
+.funnel-num {
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--muted); min-width:20px; text-align:right;
+}
+.funnel-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.funnel-name { font-size:12px; font-weight:600; flex:1; }
+.funnel-bar-wrap {
+  flex:1.5; height:6px; background:rgba(255,255,255,0.05);
+  border-radius:99px; overflow:hidden;
+}
+.funnel-bar { height:100%; border-radius:99px; transition:width .6s ease; }
+.funnel-val {
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--muted); min-width:52px; text-align:right;
+}
+.funnel-pct {
+  font-family:'IBM Plex Mono',monospace; font-size:10px;
+  min-width:38px; text-align:right;
+}
+
+/* ── MATRIX TABLE ── */
+.mtable { width:100%; border-collapse:collapse; font-size:11px; }
+.mtable th {
+  padding:6px 10px; text-align:center;
+  font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.6px; color:var(--muted); border-bottom:1px solid var(--border);
+}
+.mtable th.left { text-align:left; }
+.mtable td { padding:8px 10px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.03); }
+.mtable td.left { text-align:left; font-weight:600; }
+.mtable tr:last-child td { border-bottom:none; }
+.mtable tr:hover td { background:rgba(255,255,255,0.02); }
+.cell-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:28px; padding:2px 7px; border-radius:5px;
+  font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600;
+}
+
+/* ── ALERT BOX ── */
+.alert {
+  border-radius:10px; padding:14px 16px;
+  display:flex; gap:12px; align-items:flex-start;
+  margin-bottom:10px;
+}
+.alert-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+.alert-body { font-size:12px; line-height:1.6; }
+.alert-body strong { font-weight:700; }
+.alert.red   { background:rgba(244,63,94,0.1);  border:1px solid rgba(244,63,94,0.2); }
+.alert.amber { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); }
+.alert.blue  { background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); }
+.alert.green { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); }
+
+/* ── DEPUTY ROWS ── */
+.dep-list { display:flex; flex-direction:column; gap:8px; }
+.dep-row {
+  display:flex; align-items:center; gap:10px; padding:9px 12px;
+  background:rgba(255,255,255,0.02); border:1px solid var(--border);
+  border-radius:8px;
+}
+.dep-name { font-size:12px; font-weight:700; min-width:70px; }
+.dep-pills { display:flex; gap:5px; flex-wrap:wrap; flex:1; }
+.pill {
+  font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px;
+  font-family:'IBM Plex Mono',monospace;
+}
+.dep-total { font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); text-align:right; min-width:60px; }
+
+/* ── ABSORPSI TABLE ── */
+.abs-table { width:100%; border-collapse:collapse; }
+.abs-table th { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); padding:6px 10px; border-bottom:1px solid var(--border); text-align:left; }
+.abs-table td { padding:9px 10px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.03); }
+.abs-table tr:last-child td { border-bottom:none; }
+.abs-pct-bar { display:flex; align-items:center; gap:8px; }
+.abs-bar-track { flex:1; height:5px; background:rgba(255,255,255,0.06); border-radius:99px; overflow:hidden; }
+.abs-bar-fill  { height:100%; border-radius:99px; transition:width .5s; }
+.abs-pct-txt   { font-family:'IBM Plex Mono',monospace; font-size:11px; min-width:38px; text-align:right; }
+
+/* ── CHART ── */
+.chart-wrap canvas { max-width:100%; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:99px; }
+
+@media (max-width:1000px) {
+  .kpi-row { grid-template-columns:repeat(3,1fr); }
+  .g2,.g21,.g12 { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="h-left">
+    <div class="h-logo">🏦 BRI</div>
+    <div class="h-text">
+      <h1>Analisis Status Pengadaan – IT Infrastructure 2026</h1>
+      <p>IT DC Infrastructure &amp; Operations Group · PMO Infrastruktur · Robi Armadani</p>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="h-pill">CAPEX <span>166 proyek</span></div>
+    <div class="h-pill">OPEX <span>259 item</span></div>
+    <div class="h-pill">Update <span>Maret 2026</span></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab on" onclick="go('cap',this)">💻 INF – CAPEX <span class="tab-n">166</span></button>
+  <button class="tab" onclick="go('opex',this)">🔧 INF – OPEX <span class="tab-n">259</span></button>
+  <button class="tab" onclick="go('combined',this)">📊 Perbandingan CAPEX vs OPEX</button>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--                     CAPEX PAGE                   -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="cap" class="page on">
+
+  <!-- INSIGHT STRIP -->
+  <div class="insight-strip">
+    <div class="ins-item"><div class="ins-dot" style="background:var(--rose)"></div><div class="ins-text">⚠️ <strong>64,9% nilai CAPEX (Rp 926 B)</strong> masih berstatus <strong>Belum Mulai</strong> — bottleneck terbesar</div></div>
+    <div class="ins-item"><div class="ins-dot" style="background:var(--rose)"></div><div class="ins-text">🔴 <strong>19 proyek DQA &gt; Rp 10 B</strong> nilainya <strong>Rp 852,7 B</strong> masih Belum Mulai</div></div>
+    <div class="ins-item"><div class="ins-dot" style="background:var(--amber)"></div><div class="ins-text">⚡ <strong>Drop Rp 44,9 B</strong> dari 27 proyek — anggaran berpotensi idle</div></div>
+    <div class="ins-item"><div class="ins-dot" style="background:var(--emerald)"></div><div class="ins-text">✅ <strong>Rp 59 B</strong> di SPK Terbit — hampir ke pembayaran</div></div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi" style="--accent-color:var(--slate)">
+      <div class="kpi-top"><div class="kpi-label">Belum Mulai</div><div class="kpi-icon">⏸️</div></div>
+      <div class="kpi-val" style="color:var(--muted)">44</div>
+      <div class="kpi-sub">Rp 926,9 B · 64,9%</div>
+      <div class="kpi-bar" style="background:var(--slate);width:65%"></div>
+    </div>
+    <div class="kpi" style="--accent-color:var(--blue)">
+      <div class="kpi-top"><div class="kpi-label">Pengadaan</div><div class="kpi-icon">🔄</div></div>
+      <div class="kpi-val" style="color:var(--blue)">21</div>
+      <div class="kpi-sub">Rp 272,0 B · 19,1%</div>
+      <div class="kpi-bar" style="background:var(--blue);width:19%"></div>
+    </div>
+    <div class="kpi" style="--accent-color:var(--cyan)">
+      <div class="kpi-top"><div class="kpi-label">SPK Terbit</div><div class="kpi-icon">📄</div></div>
+      <div class="kpi-val" style="color:var(--cyan)">9</div>
+      <div class="kpi-sub">Rp 59,0 B · 4,1%</div>
+      <div class="kpi-bar" style="background:var(--cyan);width:4%"></div>
+    </div>
+    <div class="kpi" style="--accent-color:var(--emerald)">
+      <div class="kpi-top"><div class="kpi-label">Pembayaran</div><div class="kpi-icon">💳</div></div>
+      <div class="kpi-val" style="color:var(--emerald)">63</div>
+      <div class="kpi-sub">Rp 124,7 B · 8,7%</div>
+      <div class="kpi-bar" style="background:var(--emerald);width:9%"></div>
+    </div>
+    <div class="kpi" style="--accent-color:var(--rose)">
+      <div class="kpi-top"><div class="kpi-label">Drop</div><div class="kpi-icon">🚫</div></div>
+      <div class="kpi-val" style="color:var(--rose)">27</div>
+      <div class="kpi-sub">Rp 44,9 B · 3,1%</div>
+      <div class="kpi-bar" style="background:var(--rose);width:3%"></div>
+    </div>
+  </div>
+
+  <!-- ROW 1: Funnel + Stacked bar -->
+  <div class="section">Pipeline Status Pengadaan</div>
+  <div class="g21">
+    <!-- FUNNEL -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Funnel Pengadaan CAPEX — Jumlah &amp; Nilai (Rp B)</div>
+      <div class="funnel" id="cap-funnel"></div>
+    </div>
+
+    <!-- STACKED CHART -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--violet)"></span>Komposisi Status per Nilai</div>
+      <div class="chart-wrap"><canvas id="cap-donut" height="220"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Deputy matrix + Alerts -->
+  <div class="section">Distribusi Status per Deputy</div>
+  <div class="g21">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Cross-tab: Deputy × Status (Jumlah Proyek)</div>
+      <table class="mtable">
+        <thead>
+          <tr>
+            <th class="left">Deputy</th>
+            <th>Blm Mulai</th><th>Pengadaan</th><th>SPK Terbit</th><th>Pembayaran</th><th>IP Terbit</th><th>Drop</th><th>Done</th><th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="left" style="color:var(--cyan)">DQA</td>
+            <td><span class="cell-badge" style="background:rgba(100,116,139,0.2);color:var(--muted)">28</span></td>
+            <td><span class="cell-badge" style="background:rgba(59,130,246,0.2);color:var(--blue)">11</span></td>
+            <td><span class="cell-badge" style="background:rgba(6,182,212,0.2);color:var(--cyan)">2</span></td>
+            <td><span class="cell-badge" style="background:rgba(16,185,129,0.2);color:var(--emerald)">10</span></td>
+            <td><span class="cell-badge" style="background:rgba(139,92,246,0.2);color:var(--violet)">0</span></td>
+            <td><span class="cell-badge" style="background:rgba(244,63,94,0.2);color:var(--rose)">8</span></td>
+            <td>0</td>
+            <td style="font-weight:700">59</td>
+          </tr>
+          <tr>
+            <td class="left" style="color:var(--amber)">NSO</td>
+            <td><span class="cell-badge" style="background:rgba(100,116,139,0.2);color:var(--muted)">8</span></td>
+            <td><span class="cell-badge" style="background:rgba(59,130,246,0.2);color:var(--blue)">5</span></td>
+            <td><span class="cell-badge" style="background:rgba(6,182,212,0.2);color:var(--cyan)">1</span></td>
+            <td><span class="cell-badge" style="background:rgba(16,185,129,0.2);color:var(--emerald)">21</span></td>
+            <td><span class="cell-badge" style="background:rgba(139,92,246,0.2);color:var(--violet)">1</span></td>
+            <td><span class="cell-badge" style="background:rgba(244,63,94,0.2);color:var(--rose)">3</span></td>
+            <td>1</td>
+            <td style="font-weight:700">40</td>
+          </tr>
+          <tr>
+            <td class="left" style="color:var(--orange)">DCO</td>
+            <td><span class="cell-badge" style="background:rgba(100,116,139,0.2);color:var(--muted)">7</span></td>
+            <td><span class="cell-badge" style="background:rgba(59,130,246,0.2);color:var(--blue)">4</span></td>
+            <td><span class="cell-badge" style="background:rgba(6,182,212,0.2);color:var(--cyan)">4</span></td>
+            <td><span class="cell-badge" style="background:rgba(16,185,129,0.2);color:var(--emerald)">13</span></td>
+            <td>0</td>
+            <td><span class="cell-badge" style="background:rgba(244,63,94,0.2);color:var(--rose)">6</span></td>
+            <td>0</td>
+            <td style="font-weight:700">34</td>
+          </tr>
+          <tr>
+            <td class="left" style="color:var(--violet)">CMO</td>
+            <td><span class="cell-badge" style="background:rgba(100,116,139,0.2);color:var(--muted)">1</span></td>
+            <td><span class="cell-badge" style="background:rgba(59,130,246,0.2);color:var(--blue)">1</span></td>
+            <td><span class="cell-badge" style="background:rgba(6,182,212,0.2);color:var(--cyan)">2</span></td>
+            <td><span class="cell-badge" style="background:rgba(16,185,129,0.2);color:var(--emerald)">17</span></td>
+            <td>0</td>
+            <td><span class="cell-badge" style="background:rgba(244,63,94,0.2);color:var(--rose)">1</span></td>
+            <td>0</td>
+            <td style="font-weight:700">22</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:18px;">
+        <div class="card-title" style="margin-bottom:10px;"><span class="dot" style="background:var(--amber)"></span>Komposisi Status per Nilai (Rp B) per Deputy</div>
+        <div class="chart-wrap"><canvas id="cap-dep-bar" height="180"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ALERT PANEL -->
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px;"><span class="dot" style="background:var(--rose)"></span>Key Insights</div>
+        <div class="alert red">
+          <div class="alert-icon">🔴</div>
+          <div class="alert-body"><strong>KRITIS — DQA Belum Mulai Rp 899,5 B</strong><br>
+          28 proyek DQA (incl. 19 proyek &gt; Rp10B) masih belum diproses. Nilai Rp 852,7 B berpotensi tidak terserap jika tidak segera dieksekusi Q2 2026.</div>
+        </div>
+        <div class="alert amber">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body"><strong>DROP 27 Proyek Senilai Rp 44,9 B</strong><br>
+          DCO terbesar (6 proyek, Rp 7,7 B). Perlu konfirmasi apakah anggaran dapat dialihkan atau akan menjadi idle.</div>
+        </div>
+        <div class="alert blue">
+          <div class="alert-icon">📌</div>
+          <div class="alert-body"><strong>Pipeline Aktif Rp 331 B</strong><br>
+          21 proyek Pengadaan (Rp 272 B) + 9 proyek SPK Terbit (Rp 59 B) sedang dalam proses. Perlu monitoring ketat agar tidak meleser ke Q4.</div>
+        </div>
+        <div class="alert green">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body"><strong>CMO Paling Efektif</strong><br>
+          77,3% proyek CMO sudah Pembayaran. NSO 52,5% Pembayaran. Keduanya menunjukkan eksekusi yang baik secara jumlah proyek.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--emerald)"></span>Tipe Proyek pada Belum Mulai (44 proyek)</div>
+        <div class="funnel">
+          <div class="funnel-row">
+            <div class="funnel-dot" style="background:var(--blue)"></div>
+            <div class="funnel-name">Baru</div>
+            <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:95%;background:var(--blue)"></div></div>
+            <div class="funnel-val" style="color:var(--blue)">42 proyek</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-dot" style="background:var(--amber)"></div>
+            <div class="funnel-name">Sisa Bayar</div>
+            <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:2.4%;background:var(--amber)"></div></div>
+            <div class="funnel-val" style="color:var(--amber)">1 proyek</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-dot" style="background:var(--violet)"></div>
+            <div class="funnel-name">Perpanjangan</div>
+            <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:2.4%;background:var(--violet)"></div></div>
+            <div class="funnel-val" style="color:var(--violet)">1 proyek</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;font-size:11px;color:var(--muted);line-height:1.7;">
+          95% dari proyek Belum Mulai adalah proyek <strong style="color:var(--white)">Baru</strong> — bukan sisa bayar atau perpanjangan. Ini mengindikasikan belum ada inisiasi pengadaan sama sekali.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Monthly distribution chart -->
+  <div class="section">Sebaran Prognosa Bulanan vs Status</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Prognosa Bulanan per Deputy (Rp B)</div>
+      <div class="chart-wrap"><canvas id="cap-monthly-dep" height="220"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--rose)"></span>Analisis Drop — Distribusi per Deputy</div>
+      <div class="chart-wrap" style="height:180px;display:flex;align-items:center;justify-content:center;"><canvas id="cap-drop" height="180"></canvas></div>
+      <div style="margin-top:14px;font-size:11px;color:var(--muted);line-height:1.7;">
+        Dari 8 proyek Drop DQA, mayoritas nilainya kecil (Rp 4,3 B total). DCO Drop 6 proyek tapi nilainya Rp 7,7 B — perlu validasi apakah scope bisa dioptimasi.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /capex -->
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--                     OPEX PAGE                    -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="opex" class="page">
+
+  <!-- INSIGHT STRIP -->
+  <div class="insight-strip">
+    <div class="ins-item"><div class="ins-dot" style="background:var(--amber)"></div><div class="ins-text">⚠️ <strong>107 item (41,3%) Belum Mulai</strong> senilai <strong>Rp 118,5 B</strong> — NSO terbesar 72 item</div></div>
+    <div class="ins-item"><div class="ins-dot" style="background:var(--emerald)"></div><div class="ins-text">💳 <strong>Rp 657,9 B Pembayaran</strong> sudah berjalan — 73 item aktif</div></div>
+    <div class="ins-item"><div class="ins-dot" style="background:var(--cyan)"></div><div class="ins-text">📄 <strong>29 item SPK Terbit</strong> (Rp 121,2 B) — hampir masuk pembayaran</div></div>
+    <div class="ins-item"><div class="ins-dot" style="background:var(--rose)"></div><div class="ins-text">🚫 <strong>Drop Rp 21,3 B</strong> — APS Group dominan 10 item</div></div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-label">Belum Mulai</div><div class="kpi-icon">⏸️</div></div>
+      <div class="kpi-val" style="color:var(--muted)">107</div>
+      <div class="kpi-sub">Rp 118,5 B · 41,3%</div>
+      <div class="kpi-bar" style="background:var(--slate);width:41%"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-label">Pengadaan</div><div class="kpi-icon">🔄</div></div>
+      <div class="kpi-val" style="color:var(--blue)">25</div>
+      <div class="kpi-sub">Rp 185,7 B · 9,7%</div>
+      <div class="kpi-bar" style="background:var(--blue);width:10%"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-label">SPK Terbit</div><div class="kpi-icon">📄</div></div>
+      <div class="kpi-val" style="color:var(--cyan)">29</div>
+      <div class="kpi-sub">Rp 121,2 B · 11,2%</div>
+      <div class="kpi-bar" style="background:var(--cyan);width:11%"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-label">Pembayaran</div><div class="kpi-icon">💳</div></div>
+      <div class="kpi-val" style="color:var(--emerald)">73</div>
+      <div class="kpi-sub">Rp 657,9 B · 56,5%</div>
+      <div class="kpi-bar" style="background:var(--emerald);width:57%"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-label">Drop</div><div class="kpi-icon">🚫</div></div>
+      <div class="kpi-val" style="color:var(--rose)">14</div>
+      <div class="kpi-sub">Rp 21,3 B · 1,8%</div>
+      <div class="kpi-bar" style="background:var(--rose);width:2%"></div>
+    </div>
+  </div>
+
+  <!-- ROW 1: Funnel + pie -->
+  <div class="section">Pipeline Status Pengadaan OPEX</div>
+  <div class="g21">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Funnel Pengadaan OPEX — Jumlah &amp; Nilai (Rp B)</div>
+      <div class="funnel" id="opex-funnel"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--violet)"></span>Komposisi Status per Nilai</div>
+      <div class="chart-wrap"><canvas id="opex-donut" height="220"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Deputy matrix + insights -->
+  <div class="section">Distribusi Status per Deputy</div>
+  <div class="g21">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Cross-tab: Deputy × Status (Jumlah Item)</div>
+      <table class="mtable">
+        <thead>
+          <tr>
+            <th class="left">Deputy</th>
+            <th>Blm Mulai</th><th>Pengadaan</th><th>SPK Terbit</th><th>Pembayaran</th><th>IP Terbit</th><th>Drop</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="left" style="color:var(--cyan)">NSO</td>
+            <td><span class="cell-badge" style="background:rgba(100,116,139,0.2);color:var(--muted)">72</span></td>
+            <td><span class="cell-badge" style="background:rgba(59,130,246,0.2);color:var(--blue)">15</span></td>
+            <td><span class="cell-badge" style="background:rgba(6,182,212,0.2);color:var(--cyan)">18</span></td>
+            <td><span class="cell-badge" style="background:rgba(16,185,129,0.2);color:var(--emerald)">23</span></td>
+            <td><span class="cell-badge" style="background:rgba(139,92,246,0.2);color:var(--violet)">6</span></td>
+            <td>0</td>
+            <td style="font-weight:700">136</td>
+          </tr>
+          <tr>
+            <td class="left" style="color:var(--violet)">CMO</td>
+            <td><span class="cell-badge" style="background:rgba(100,116,139,0.2);color:var(--muted)">13</span></td>
+            <td><span class="cell-badge" style="background:rgba(59,130,246,0.2);color:var(--blue)">6</span></td>
+            <td><span class="cell-badge" style="background:rgba(6,182,212,0.2);color:var(--cyan)">8</span></td>
+            <td><span class="cell-badge" style="background:rgba(16,185,129,0.2);color:var(--emerald)">29</span></td>
+            <td><span class="cell-badge" style="background:rgba(139,92,246,0.2);color:var(--violet)">1</span></td>
+            <td><span class="cell-badge" style="background:rgba(244,63,94,0.2);color:var(--rose)">2</span></td>
+            <td style="font-weight:700">60</td>
+          </tr>
+          <tr>
+            <td class="left" style="color:var(--orange)">DCO</td>
+            <td><span class="cell-badge" style="background:rgba(100,116,139,0.2);color:var(--muted)">19</span></td>
+            <td><span class="cell-badge" style="background:rgba(59,130,246,0.2);color:var(--blue)">1</span></td>
+            <td><span class="cell-badge" style="background:rgba(6,182,212,0.2);color:var(--cyan)">3</span></td>
+            <td><span class="cell-badge" style="background:rgba(16,185,129,0.2);color:var(--emerald)">14</span></td>
+            <td><span class="cell-badge" style="background:rgba(139,92,246,0.2);color:var(--violet)">1</span></td>
+            <td>0</td>
+            <td style="font-weight:700">38</td>
+          </tr>
+          <tr>
+            <td class="left" style="color:var(--rose)">APS Group</td>
+            <td>0</td>
+            <td>0</td>
+            <td>0</td>
+            <td>0</td>
+            <td>0</td>
+            <td><span class="cell-badge" style="background:rgba(244,63,94,0.2);color:var(--rose)">10</span></td>
+            <td style="font-weight:700">10</td>
+          </tr>
+          <tr>
+            <td class="left" style="color:var(--blue)">DQA</td>
+            <td><span class="cell-badge" style="background:rgba(100,116,139,0.2);color:var(--muted)">2</span></td>
+            <td><span class="cell-badge" style="background:rgba(59,130,246,0.2);color:var(--blue)">3</span></td>
+            <td>0</td>
+            <td><span class="cell-badge" style="background:rgba(16,185,129,0.2);color:var(--emerald)">4</span></td>
+            <td>0</td>
+            <td><span class="cell-badge" style="background:rgba(244,63,94,0.2);color:var(--rose)">1</span></td>
+            <td style="font-weight:700">10</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:18px;">
+        <div class="card-title" style="margin-bottom:10px;"><span class="dot" style="background:var(--amber)"></span>Nilai per Status per Deputy (Rp B)</div>
+        <div class="chart-wrap"><canvas id="opex-dep-bar" height="180"></canvas></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Alerts + GL breakdown -->
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px;"><span class="dot" style="background:var(--amber)"></span>Key Insights</div>
+        <div class="alert amber">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body"><strong>NSO — 72 item Belum Mulai (Rp 71,7 B)</strong><br>
+          53% item NSO masih belum diproses. Dengan absorpsi NSO 63,8%, perlu percepatan eksekusi terutama untuk item sewa dan pemeliharaan.</div>
+        </div>
+        <div class="alert red">
+          <div class="alert-icon">🔴</div>
+          <div class="alert-body"><strong>APS Group — 100% item Di-Drop (Rp 15,5 B)</strong><br>
+          Seluruh 10 item APS Group berstatus Drop. Perlu konfirmasi apakah ini keputusan final atau akan direalokasi ke unit lain.</div>
+        </div>
+        <div class="alert blue">
+          <div class="alert-icon">📌</div>
+          <div class="alert-body"><strong>SPK Terbit Rp 121,2 B Menunggu Pembayaran</strong><br>
+          29 item sudah terbit SPK. Dominasi Pemeliharaan HW/SW (Rp 42,9 B) + Managed Service (Rp 73,5 B). Potensi masuk pembayaran Q2 2026.</div>
+        </div>
+        <div class="alert green">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body"><strong>CMO Absorpsi Terbaik 99,2%</strong><br>
+          CMO hampir sempurna dalam penyerapan. 48% item-nya sudah Pembayaran. Pola ini bisa jadi benchmark untuk deputy lain.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>SPK Terbit — Breakdown per GL</div>
+        <table class="abs-table">
+          <thead><tr><th>Nama GL</th><th>Item</th><th>Nilai (B)</th></tr></thead>
+          <tbody>
+            <tr><td>Biaya Managed Service Digital & IT</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">9</td><td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cyan)">73,5</span></td></tr>
+            <tr><td>Pemeliharaan & Perbaikan AT HW SW</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">13</td><td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cyan)">42,9</span></td></tr>
+            <tr><td>Honorarium Operasional TI</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">5</td><td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cyan)">3,6</span></td></tr>
+            <tr><td>Biaya Instalasi/Implementasi</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">1</td><td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cyan)">1,0</span></td></tr>
+            <tr><td>Honorarium Konsultan TI</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">1</td><td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cyan)">0,3</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div><!-- /opex -->
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--               COMBINED / COMPARISON              -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="combined" class="page">
+
+  <div class="insight-strip">
+    <div class="ins-item"><div class="ins-dot" style="background:var(--rose)"></div><div class="ins-text">CAPEX <strong>64,9%</strong> nilai belum mulai vs OPEX hanya <strong>10,2%</strong> nilai — gap sangat besar</div></div>
+    <div class="ins-item"><div class="ins-dot" style="background:var(--emerald)"></div><div class="ins-text">OPEX lebih mature: <strong>56,5%</strong> nilai sudah Pembayaran vs CAPEX hanya <strong>8,7%</strong></div></div>
+    <div class="ins-item"><div class="ins-dot" style="background:var(--amber)"></div><div class="ins-text">Combined Drop: <strong>Rp 66,2 B</strong> (CAPEX Rp 44,9B + OPEX Rp 21,3B) berpotensi idle</div></div>
+  </div>
+
+  <!-- KPI row comparing -->
+  <div class="section">Perbandingan CAPEX vs OPEX</div>
+  <div class="g2" style="margin-bottom:18px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>CAPEX — Komposisi Status per Nilai (Rp B)</div>
+      <div class="chart-wrap"><canvas id="cmp-capex-bar" height="230"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--amber)"></span>OPEX — Komposisi Status per Nilai (Rp B)</div>
+      <div class="chart-wrap"><canvas id="cmp-opex-bar" height="230"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section">Analisis Pipeline — CAPEX vs OPEX</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Persentase Nilai per Status (%)</div>
+      <div class="chart-wrap"><canvas id="cmp-pct" height="260"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--violet)"></span>Ringkasan Perbandingan</div>
+      <table class="abs-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>CAPEX (B)</th><th>CAPEX %</th>
+            <th>OPEX (B)</th><th>OPEX %</th>
+          </tr>
+        </thead>
+        <tbody id="cmp-table-body"></tbody>
+      </table>
+      <div style="margin-top:18px;">
+        <div class="alert blue" style="margin-bottom:0">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body"><strong>Perbedaan kematangan eksekusi</strong><br>
+          OPEX lebih mature karena banyak yang merupakan Sisa Bayar / Perpanjangan kontrak rutin (Pembayaran 73 item). CAPEX didominasi proyek Baru yang belum mulai inisiasi pengadaan, terutama di DQA.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /combined -->
+
+<script>
+// ─── CHART DEFAULTS ───
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = "'Sora', sans-serif";
+Chart.defaults.font.size = 11;
+
+const COLORS = {
+  'Belum mulai': '#64748b', 'IP Terbit': '#8b5cf6',
+  'Pengadaan': '#3b82f6',   'SPK Terbit': '#06b6d4',
+  'Pembayaran': '#10b981',  'Done': '#22c55e',
+  'Drop': '#f43f5e',        'Komite': '#f97316',
+};
+
+// ─── CAPEX FUNNEL ───
+const capFunnelData = [
+  { name:'Belum Mulai', count:44,  val:926.9, color:'#64748b' },
+  { name:'IP Terbit',   count:1,   val:0.4,   color:'#8b5cf6' },
+  { name:'Pengadaan',   count:21,  val:272.0, color:'#3b82f6' },
+  { name:'SPK Terbit',  count:9,   val:59.0,  color:'#06b6d4' },
+  { name:'Pembayaran',  count:63,  val:124.7, color:'#10b981' },
+  { name:'Done',        count:1,   val:0.0,   color:'#22c55e' },
+  { name:'Drop',        count:27,  val:44.9,  color:'#f43f5e' },
+];
+const capMax = Math.max(...capFunnelData.map(d=>d.val));
+const fEl = document.getElementById('cap-funnel');
+capFunnelData.forEach(d => {
+  const pct = (d.val/capMax*100).toFixed(0);
+  const vpct = (d.val/1427.9*100).toFixed(1);
+  fEl.innerHTML += `
+  <div class="funnel-row">
+    <div class="funnel-num">${d.count}</div>
+    <div class="funnel-dot" style="background:${d.color}"></div>
+    <div class="funnel-name" style="color:${d.color}">${d.name}</div>
+    <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${pct}%;background:${d.color}"></div></div>
+    <div class="funnel-val" style="color:${d.color}">Rp ${d.val.toFixed(1)}B</div>
+    <div class="funnel-pct" style="color:${d.color}">${vpct}%</div>
+  </div>`;
+});
+
+// ─── OPEX FUNNEL ───
+const opexFunnelData = [
+  { name:'Belum Mulai', count:107, val:118.5, color:'#64748b' },
+  { name:'IP Terbit',   count:8,   val:57.7,  color:'#8b5cf6' },
+  { name:'Pengadaan',   count:25,  val:185.7, color:'#3b82f6' },
+  { name:'SPK Terbit',  count:29,  val:121.2, color:'#06b6d4' },
+  { name:'Pembayaran',  count:73,  val:657.9, color:'#10b981' },
+  { name:'Done',        count:1,   val:0.2,   color:'#22c55e' },
+  { name:'Drop',        count:14,  val:21.3,  color:'#f43f5e' },
+  { name:'Komite',      count:1,   val:0.9,   color:'#f97316' },
+];
+const opexMax = Math.max(...opexFunnelData.map(d=>d.val));
+const ofEl = document.getElementById('opex-funnel');
+opexFunnelData.forEach(d => {
+  const pct = (d.val/opexMax*100).toFixed(0);
+  const vpct = (d.val/1163.4*100).toFixed(1);
+  ofEl.innerHTML += `
+  <div class="funnel-row">
+    <div class="funnel-num">${d.count}</div>
+    <div class="funnel-dot" style="background:${d.color}"></div>
+    <div class="funnel-name" style="color:${d.color}">${d.name}</div>
+    <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${pct}%;background:${d.color}"></div></div>
+    <div class="funnel-val" style="color:${d.color}">Rp ${d.val.toFixed(1)}B</div>
+    <div class="funnel-pct" style="color:${d.color}">${vpct}%</div>
+  </div>`;
+});
+
+// ─── CAPEX DONUT ───
+new Chart(document.getElementById('cap-donut'),{
+  type:'doughnut',
+  data:{
+    labels: capFunnelData.map(d=>d.name),
+    datasets:[{ data: capFunnelData.map(d=>d.val),
+      backgroundColor: capFunnelData.map(d=>d.color+'cc'),
+      borderColor: capFunnelData.map(d=>d.color),
+      borderWidth:1.5, hoverOffset:8 }]
+  },
+  options:{ responsive:true,maintainAspectRatio:true, cutout:'58%',
+    plugins:{
+      legend:{ position:'right', labels:{ font:{size:10}, padding:10, boxWidth:10 }},
+      tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: Rp ${ctx.parsed.toFixed(1)} B` }}
+    }
+  }
+});
+
+// ─── OPEX DONUT ───
+new Chart(document.getElementById('opex-donut'),{
+  type:'doughnut',
+  data:{
+    labels: opexFunnelData.map(d=>d.name),
+    datasets:[{ data: opexFunnelData.map(d=>d.val),
+      backgroundColor: opexFunnelData.map(d=>d.color+'cc'),
+      borderColor: opexFunnelData.map(d=>d.color),
+      borderWidth:1.5, hoverOffset:8 }]
+  },
+  options:{ responsive:true,maintainAspectRatio:true, cutout:'58%',
+    plugins:{
+      legend:{ position:'right', labels:{ font:{size:10}, padding:10, boxWidth:10 }},
+      tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: Rp ${ctx.parsed.toFixed(1)} B` }}
+    }
+  }
+});
+
+// ─── CAPEX Deputy Stacked Bar ───
+new Chart(document.getElementById('cap-dep-bar'),{
+  type:'bar',
+  data:{
+    labels:['DQA','NSO','DCO','CMO'],
+    datasets:[
+      { label:'Belum Mulai', data:[899.5,4.6,21.2,1.6], backgroundColor:'#64748b99', borderColor:'#64748b', borderWidth:1 },
+      { label:'Pengadaan',   data:[194.9,20.4,54.0,2.7], backgroundColor:'#3b82f699', borderColor:'#3b82f6', borderWidth:1 },
+      { label:'SPK Terbit',  data:[19.9,0.3,32.3,6.6], backgroundColor:'#06b6d499', borderColor:'#06b6d4', borderWidth:1 },
+      { label:'Pembayaran',  data:[50.1,45.1,1.2,27.7], backgroundColor:'#10b98199', borderColor:'#10b981', borderWidth:1 },
+      { label:'Drop',        data:[4.3,2.9,7.7,1.1], backgroundColor:'#f43f5e99', borderColor:'#f43f5e', borderWidth:1 },
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true, scales:{
+      x:{ stacked:true, grid:{display:false} },
+      y:{ stacked:true, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ callback:v=>`${v}B` }}
+    },
+    plugins:{
+      legend:{ position:'bottom', labels:{ font:{size:10}, padding:10, boxWidth:10 }},
+      tooltip:{ callbacks:{ label: ctx => ` ${ctx.dataset.label}: Rp ${ctx.parsed.y.toFixed(1)} B` }}
+    }
+  }
+});
+
+// ─── OPEX Deputy Stacked Bar ───
+new Chart(document.getElementById('opex-dep-bar'),{
+  type:'bar',
+  data:{
+    labels:['NSO','CMO','DCO','DQA','APS Group'],
+    datasets:[
+      { label:'Belum Mulai', data:[71.7,40.3,4.6,0.4,0],    backgroundColor:'#64748b99', borderColor:'#64748b', borderWidth:1 },
+      { label:'Pengadaan',   data:[71.2,82.0,0.1,32.2,0],   backgroundColor:'#3b82f699', borderColor:'#3b82f6', borderWidth:1 },
+      { label:'SPK Terbit',  data:[13.2,107.6,0.5,0,0],     backgroundColor:'#06b6d499', borderColor:'#06b6d4', borderWidth:1 },
+      { label:'Pembayaran',  data:[556.1,66.8,32.2,2.6,0],  backgroundColor:'#10b98199', borderColor:'#10b981', borderWidth:1 },
+      { label:'IP Terbit',   data:[53.2,4.0,0.4,0,0],       backgroundColor:'#8b5cf699', borderColor:'#8b5cf6', borderWidth:1 },
+      { label:'Drop',        data:[0,3.9,0,0.2,15.5],       backgroundColor:'#f43f5e99', borderColor:'#f43f5e', borderWidth:1 },
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true, scales:{
+      x:{ stacked:true, grid:{display:false} },
+      y:{ stacked:true, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ callback:v=>`${v}B` }}
+    },
+    plugins:{
+      legend:{ position:'bottom', labels:{ font:{size:10}, padding:8, boxWidth:10 }},
+      tooltip:{ callbacks:{ label: ctx => ` ${ctx.dataset.label}: Rp ${ctx.parsed.y.toFixed(1)} B` }}
+    }
+  }
+});
+
+// ─── CAPEX Monthly per Deputy ───
+const months=['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGST','SEP','OKT','NOV','DES'];
+new Chart(document.getElementById('cap-monthly-dep'),{
+  type:'bar',
+  data:{
+    labels:months,
+    datasets:[
+      { label:'DQA', data:[13248,13595,38764,61935,46241,60010,397448,99080,61089,66091,194066,117028].map(v=>v/1e3),
+        backgroundColor:'rgba(6,182,212,0.7)', borderColor:'#06b6d4', borderWidth:1, borderRadius:4 },
+      { label:'DCO', data:[0,30170,1000,0,16415,630,0,35631,4828,5427,2850,19317].map(v=>v/1e3),
+        backgroundColor:'rgba(245,158,11,0.7)', borderColor:'#f59e0b', borderWidth:1, borderRadius:4 },
+      { label:'NSO', data:[0,5936,24894,6454,3585,5602,8217,4143,5876,0,0,9045].map(v=>v/1e3),
+        backgroundColor:'rgba(16,185,129,0.7)', borderColor:'#10b981', borderWidth:1, borderRadius:4 },
+      { label:'CMO', data:[1055,6331,5575,1629,2423,5277,9279,0,0,0,0,8205].map(v=>v/1e3),
+        backgroundColor:'rgba(139,92,246,0.7)', borderColor:'#8b5cf6', borderWidth:1, borderRadius:4 },
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true, scales:{
+      x:{ stacked:true, grid:{display:false}, ticks:{font:{size:10}} },
+      y:{ stacked:true, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ callback:v=>`${v}B`,font:{size:10} }}
+    },
+    plugins:{
+      legend:{ position:'bottom', labels:{font:{size:10},padding:10,boxWidth:10} },
+      tooltip:{ callbacks:{ label: ctx => ` ${ctx.dataset.label}: Rp ${ctx.parsed.y.toFixed(1)} B` }}
+    }
+  }
+});
+
+// ─── CAPEX DROP PIE ───
+new Chart(document.getElementById('cap-drop'),{
+  type:'doughnut',
+  data:{
+    labels:['DQA (8 proy, Rp 4.3B)','DCO (6 proy, Rp 7.7B)','NSO (3 proy, Rp 2.9B)','CMO (1 proy, Rp 1.1B)'],
+    datasets:[{ data:[4.3,7.7,2.9,1.1],
+      backgroundColor:['rgba(6,182,212,0.8)','rgba(245,158,11,0.8)','rgba(16,185,129,0.8)','rgba(139,92,246,0.8)'],
+      borderColor:['#06b6d4','#f59e0b','#10b981','#8b5cf6'],
+      borderWidth:1.5, hoverOffset:6 }]
+  },
+  options:{ responsive:false, maintainAspectRatio:false, cutout:'52%',
+    plugins:{ legend:{ position:'bottom', labels:{font:{size:10},padding:8,boxWidth:10} },
+      tooltip:{ callbacks:{ label:ctx=>` ${ctx.label}` }}}
+  }
+});
+
+// ─── COMBINED CHARTS ───
+const statuses = ['Belum Mulai','IP Terbit','Pengadaan','SPK Terbit','Pembayaran','Done','Drop'];
+const capexVals = [926.9,0.4,272.0,59.0,124.7,0.0,44.9];
+const opexVals  = [118.5,57.7,185.7,121.2,657.9,0.2,21.3];
+const statusCols = ['#64748b','#8b5cf6','#3b82f6','#06b6d4','#10b981','#22c55e','#f43f5e'];
+
+new Chart(document.getElementById('cmp-capex-bar'),{
+  type:'bar',
+  data:{
+    labels:statuses,
+    datasets:[{ data:capexVals, backgroundColor:statusCols.map(c=>c+'bb'), borderColor:statusCols, borderWidth:1, borderRadius:6 }]
+  },
+  options:{ responsive:true, plugins:{ legend:{display:false},
+    tooltip:{ callbacks:{ label:ctx=>` Rp ${ctx.parsed.y.toFixed(1)} B` }}},
+    scales:{ x:{grid:{display:false}}, y:{ grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>`${v}B`}} }
+  }
+});
+
+new Chart(document.getElementById('cmp-opex-bar'),{
+  type:'bar',
+  data:{
+    labels:statuses,
+    datasets:[{ data:opexVals, backgroundColor:statusCols.map(c=>c+'bb'), borderColor:statusCols, borderWidth:1, borderRadius:6 }]
+  },
+  options:{ responsive:true, plugins:{ legend:{display:false},
+    tooltip:{ callbacks:{ label:ctx=>` Rp ${ctx.parsed.y.toFixed(1)} B` }}},
+    scales:{ x:{grid:{display:false}}, y:{ grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>`${v}B`}} }
+  }
+});
+
+// PCT comparison
+const capTotal = capexVals.reduce((a,b)=>a+b,0);
+const opTotal  = opexVals.reduce((a,b)=>a+b,0);
+new Chart(document.getElementById('cmp-pct'),{
+  type:'bar',
+  data:{
+    labels:statuses,
+    datasets:[
+      { label:'CAPEX %', data:capexVals.map(v=>(v/capTotal*100).toFixed(1)),
+        backgroundColor:'rgba(59,130,246,0.7)', borderColor:'#3b82f6', borderWidth:1, borderRadius:4 },
+      { label:'OPEX %',  data:opexVals.map(v=>(v/opTotal*100).toFixed(1)),
+        backgroundColor:'rgba(245,158,11,0.7)', borderColor:'#f59e0b', borderWidth:1, borderRadius:4 },
+    ]
+  },
+  options:{ responsive:true,
+    scales:{ x:{grid:{display:false}}, y:{ grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>`${v}%`}} },
+    plugins:{ legend:{ position:'bottom', labels:{font:{size:11},padding:12,boxWidth:12} },
+      tooltip:{ callbacks:{ label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y}%` }}}
+  }
+});
+
+// CMP TABLE
+const tbody = document.getElementById('cmp-table-body');
+statuses.forEach((s,i) => {
+  const cv = capexVals[i], ov = opexVals[i];
+  const cp = (cv/capTotal*100).toFixed(1), op2 = (ov/opTotal*100).toFixed(1);
+  tbody.innerHTML += `<tr>
+    <td><span class="cell-badge" style="background:${statusCols[i]}22;color:${statusCols[i]}">${s}</span></td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:right">${cv.toFixed(1)}</td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:right;color:${statusCols[i]}">${cp}%</td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:right">${ov.toFixed(1)}</td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:right;color:${statusCols[i]}">${op2}%</td>
+  </tr>`;
+});
+
+// ─── TAB SWITCHING ───
+function go(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  btn.classList.add('on');
+}
+</script>
+</body>
+</html>

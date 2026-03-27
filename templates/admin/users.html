@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Kelola User — InfraView{% endblock %}
+
+{% block content %}
+<div class="p-6 lg:p-8 max-w-4xl">
+    <div class="mb-6">
+        <a href="{{ url_for('admin.panel') }}" class="text-sm text-slate-400 hover:text-teal-600 transition">&larr; Kembali ke Admin</a>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm mb-6">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="font-semibold text-slate-800">User Management</h2>
+            <a href="{{ url_for('admin.new_user') }}" class="text-sm bg-teal-600 hover:bg-teal-700 text-white px-4 py-1.5 rounded-lg transition">
+                + Tambah User
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-100 text-left text-slate-500">
+                        <th class="px-5 py-3 font-medium">Username</th>
+                        <th class="px-5 py-3 font-medium">Nama</th>
+                        <th class="px-5 py-3 font-medium">Role</th>
+                        <th class="px-5 py-3 font-medium">Status</th>
+                        <th class="px-5 py-3 font-medium text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for u in users %}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-5 py-3 font-mono text-xs text-slate-700">{{ u.username }}</td>
+                        <td class="px-5 py-3 text-slate-700">{{ u.display_name }}</td>
+                        <td class="px-5 py-3">
+                            {% if u.is_admin %}
+                            <span class="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">Admin</span>
+                            {% else %}
+                            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Viewer</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-3">
+                            {% if u.is_active %}
+                            <span class="inline-flex items-center gap-1 text-xs text-emerald-600">
+                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Aktif
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 text-xs text-slate-400">
+                                <span class="w-1.5 h-1.5 bg-slate-300 rounded-full"></span> Nonaktif
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-3 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                {% if u.id != current_user.id %}
+                                <form method="POST" action="{{ url_for('admin.toggle_user', id=u.id) }}" class="inline">
+                                    <button type="submit" class="text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded transition">
+                                        {{ 'Nonaktifkan' if u.is_active else 'Aktifkan' }}
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <form method="POST" action="{{ url_for('admin.reset_password', id=u.id) }}" class="inline reset-pw-form">
+                                    <input type="hidden" name="new_password" class="reset-pw-input">
+                                    <button type="button" class="text-xs text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded transition reset-pw-btn">
+                                        Reset PW
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.reset-pw-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const newPw = prompt('Masukkan password baru:');
+        if (newPw && newPw.trim()) {
+            const form = this.closest('.reset-pw-form');
+            form.querySelector('.reset-pw-input').value = newPw.trim();
+            form.submit();
+        }
+    });
+});
+</script>
+{% endblock %}

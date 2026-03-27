@@ -1,0 +1,62 @@
+# Operating Systems
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE & Editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
+
+# Node.js (if using for any build process)
+node_modules/
+package-lock.json
+yarn.lock
+.npm
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build & Dist
+dist/
+build/
+.cache/
+
+# OS-specific
+.AppleDouble
+.LSOverride
+._*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Local development
+local/
+private/
+secrets/
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE Specific
+.eslintcache
+.stylelintcache

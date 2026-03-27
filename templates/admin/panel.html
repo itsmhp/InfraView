@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel — InfraView{% endblock %}
+
+{% block content %}
+<div class="p-6 lg:p-8 max-w-6xl">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-800">Admin Panel</h1>
+        <p class="text-slate-500 text-sm mt-1">Kelola dashboard dan user</p>
+    </div>
+
+    <!-- Dashboard Management -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm mb-6">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="font-semibold text-slate-800">Dashboards</h2>
+            <a href="{{ url_for('admin.new_dashboard') }}" class="text-sm bg-teal-600 hover:bg-teal-700 text-white px-4 py-1.5 rounded-lg transition">
+                + Tambah Dashboard
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-100 text-left text-slate-500">
+                        <th class="px-5 py-3 font-medium">Dashboard</th>
+                        <th class="px-5 py-3 font-medium">Slug</th>
+                        <th class="px-5 py-3 font-medium">Status</th>
+                        <th class="px-5 py-3 font-medium">Ukuran</th>
+                        <th class="px-5 py-3 font-medium">Terakhir Update</th>
+                        <th class="px-5 py-3 font-medium">Diupload Oleh</th>
+                        <th class="px-5 py-3 font-medium text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for d in dashboards %}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-5 py-3">
+                            <span class="mr-1">{{ d.icon }}</span>
+                            <span class="font-medium text-slate-700">{{ d.name }}</span>
+                            {% if not d.is_active %}
+                            <span class="ml-1 text-xs bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">Nonaktif</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-3 text-slate-500 font-mono text-xs">{{ d.slug }}</td>
+                        <td class="px-5 py-3">
+                            {% if d.has_content %}
+                            <span class="inline-flex items-center gap-1 text-xs text-emerald-600">
+                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Ada data
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 text-xs text-slate-400">
+                                <span class="w-1.5 h-1.5 bg-slate-300 rounded-full"></span> Kosong
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-3 text-slate-500 text-xs">{{ d.file_size_display }}</td>
+                        <td class="px-5 py-3 text-slate-500 text-xs">{{ d.updated_display }}</td>
+                        <td class="px-5 py-3 text-slate-500 text-xs">{{ d.uploader.display_name if d.uploader else '-' }}</td>
+                        <td class="px-5 py-3 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{{ url_for('admin.upload', slug=d.slug) }}" class="text-xs text-teal-600 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded transition">Upload</a>
+                                <a href="{{ url_for('admin.edit_dashboard', id=d.id) }}" class="text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded transition">Edit</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-4 text-center">
+            <div class="text-2xl font-bold text-teal-600">{{ dashboards|length }}</div>
+            <div class="text-xs text-slate-500 mt-1">Total Dashboard</div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4 text-center">
+            <div class="text-2xl font-bold text-emerald-600">{{ dashboards|selectattr('has_content')|list|length }}</div>
+            <div class="text-xs text-slate-500 mt-1">Dengan Data</div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4 text-center">
+            <div class="text-2xl font-bold text-slate-600">{{ users|length }}</div>
+            <div class="text-xs text-slate-500 mt-1">Total User</div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4 text-center">
+            <div class="text-2xl font-bold text-blue-600">{{ users|selectattr('is_active')|list|length }}</div>
+            <div class="text-xs text-slate-500 mt-1">User Aktif</div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="flex gap-3">
+        <a href="{{ url_for('admin.users') }}" class="text-sm text-slate-600 hover:text-teal-600 bg-white border border-slate-200 hover:border-teal-300 px-4 py-2 rounded-lg transition">
+            Kelola User &rarr;
+        </a>
+        <a href="{{ url_for('main.hub') }}" class="text-sm text-slate-600 hover:text-teal-600 bg-white border border-slate-200 hover:border-teal-300 px-4 py-2 rounded-lg transition">
+            Lihat Hub &rarr;
+        </a>
+    </div>
+</div>
+{% endblock %}
