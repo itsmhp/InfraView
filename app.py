@@ -53,6 +53,11 @@ def create_app():
     # Create tables
     with app.app_context():
         db.create_all()
+        # Idempotent migration: add columns that db.create_all() won't add to existing tables
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;"))
+            conn.commit()
 
     return app
 
