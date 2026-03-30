@@ -3,43 +3,80 @@
 
 {% block content %}
 <div class="flex flex-col h-[calc(100vh-52px)]">
+    <!-- Breadcrumb -->
+    <nav class="px-5 py-2 text-xs text-slate-400 bg-slate-50 border-b border-slate-100 shrink-0">
+        <a href="{{ url_for('main.hub') }}" class="hover:text-bri-600 transition">Hub</a>
+        <span class="mx-1">/</span>
+        <span class="text-slate-600">{{ dashboard.name }}</span>
+    </nav>
+
     <!-- Viewer Header -->
-    <div class="px-5 py-3 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-3">
-            <a href="{{ url_for('main.hub') }}" class="text-slate-400 hover:text-teal-600 transition" title="Kembali ke Hub">
+    <div class="px-4 sm:px-5 py-3 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3 min-w-0">
+            <a href="{{ url_for('main.hub') }}" class="text-slate-400 hover:text-bri-600 transition shrink-0" title="Kembali ke Hub">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
             </a>
-            <div>
-                <h2 class="font-semibold text-slate-800 text-sm">{{ dashboard.icon }} {{ dashboard.name }}</h2>
+            <div class="min-w-0">
+                <h2 class="font-semibold text-slate-800 text-sm truncate">{{ dashboard.icon }} {{ dashboard.name }}</h2>
                 <span class="text-xs text-slate-400">{{ dashboard.updated_display }}</span>
             </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
             {% if dashboard.has_content %}
-            <button onclick="refreshDashboard()" class="text-xs text-slate-500 hover:text-teal-600 bg-slate-100 hover:bg-teal-50 px-3 py-1.5 rounded transition" title="Refresh">
-                <svg class="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onclick="refreshDashboard()" class="text-xs text-slate-500 hover:text-bri-600 bg-slate-100 hover:bg-bri-50 px-2 sm:px-3 py-1.5 rounded transition" title="Refresh">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                Refresh
+                <span class="hidden sm:inline ml-1">Refresh</span>
+            </button>
+            <button onclick="toggleFullscreen()" class="text-xs text-slate-500 hover:text-bri-600 bg-slate-100 hover:bg-bri-50 px-2 sm:px-3 py-1.5 rounded transition" title="Fullscreen">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+                <span class="hidden sm:inline ml-1">Fullscreen</span>
+            </button>
+            <button onclick="printDashboard()" class="text-xs text-slate-500 hover:text-bri-600 bg-slate-100 hover:bg-bri-50 px-2 sm:px-3 py-1.5 rounded transition" title="Print">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                <span class="hidden sm:inline ml-1">Print</span>
             </button>
             {% endif %}
             {% if current_user.is_admin %}
-            <a href="{{ url_for('admin.upload', slug=dashboard.slug) }}" class="text-xs text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded transition">
-                Upload Baru
+            <a href="{{ url_for('admin.upload', slug=dashboard.slug) }}" class="text-xs text-bri-600 hover:text-bri-700 bg-bri-50 hover:bg-bri-100 px-2 sm:px-3 py-1.5 rounded transition">
+                <span class="hidden sm:inline">Upload Baru</span>
+                <span class="sm:hidden">Upload</span>
             </a>
             {% endif %}
         </div>
     </div>
 
+    <!-- Stale Data Warning -->
+    {% if dashboard.has_content and dashboard.freshness == 'stale' %}
+    <div class="px-4 sm:px-5 py-2 bg-red-50 border-b border-red-200 flex items-center gap-2 text-sm text-red-700 shrink-0">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span>Data terakhir diperbarui <strong>30+ hari lalu</strong>. Hubungi admin untuk update terbaru.</span>
+    </div>
+    {% elif dashboard.has_content and dashboard.freshness == 'aging' %}
+    <div class="px-4 sm:px-5 py-2 bg-amber-50 border-b border-amber-200 flex items-center gap-2 text-sm text-amber-700 shrink-0">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Data terakhir diperbarui <strong>7+ hari lalu</strong>.</span>
+    </div>
+    {% endif %}
+
     <!-- Dashboard Content -->
     {% if dashboard.has_content %}
     <div class="flex-1 relative">
-        <div id="loading-overlay" class="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+        <div id="loading-overlay" class="absolute inset-0 bg-white/90 flex items-center justify-center z-10">
             <div class="text-center">
-                <div class="w-8 h-8 border-3 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto"></div>
-                <p class="text-sm text-slate-500 mt-2">Memuat dashboard...</p>
+                <div class="flex justify-center gap-1 mb-3">
+                    <div class="w-2.5 h-2.5 bg-bri-500 rounded-full animate-bounce" style="animation-delay:0ms"></div>
+                    <div class="w-2.5 h-2.5 bg-bri-400 rounded-full animate-bounce" style="animation-delay:150ms"></div>
+                    <div class="w-2.5 h-2.5 bg-bri-300 rounded-full animate-bounce" style="animation-delay:300ms"></div>
+                </div>
+                <p id="loading-text" class="text-sm text-slate-500">Memuat dashboard...</p>
             </div>
         </div>
         <iframe id="dashboard-frame"
@@ -57,7 +94,7 @@
             <p class="text-slate-400 text-sm mt-2">Dashboard ini belum memiliki file HTML.</p>
             {% if current_user.is_admin %}
             <a href="{{ url_for('admin.upload', slug=dashboard.slug) }}"
-               class="inline-block mt-4 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm transition">
+               class="inline-block mt-4 bg-bri-500 hover:bg-bri-600 text-white px-5 py-2 rounded-lg text-sm transition">
                 Upload HTML
             </a>
             {% else %}
@@ -83,7 +120,30 @@ function refreshDashboard() {
     const frame = document.getElementById('dashboard-frame');
     if (frame) frame.src = frame.src;
 }
+function toggleFullscreen() {
+    const frame = document.getElementById('dashboard-frame');
+    if (!frame) return;
+    if (frame.requestFullscreen) frame.requestFullscreen();
+    else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+    else if (frame.msRequestFullscreen) frame.msRequestFullscreen();
+}
+function printDashboard() {
+    const frame = document.getElementById('dashboard-frame');
+    if (frame && frame.contentWindow) frame.contentWindow.print();
+}
+// Progressive loading text
+setTimeout(() => {
+    const t = document.getElementById('loading-text');
+    if (t) t.textContent = 'Masih memuat... file cukup besar';
+}, 5000);
 // Timeout fallback
-setTimeout(hideLoading, 5000);
+setTimeout(hideLoading, 15000);
+
+// Keyboard shortcuts for viewer
+document.addEventListener('keydown', function(e) {
+    if (e.altKey && e.key === 'r') { e.preventDefault(); refreshDashboard(); }
+    if (e.altKey && e.key === 'f') { e.preventDefault(); toggleFullscreen(); }
+    if (e.altKey && e.key === 'p') { e.preventDefault(); printDashboard(); }
+});
 </script>
 {% endblock %}

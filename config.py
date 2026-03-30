@@ -8,7 +8,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///infraview.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB max upload
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB max upload
 
     # Fix for Render PostgreSQL URI (postgres:// -> postgresql://)
     if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):

@@ -14,6 +14,7 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default='viewer')  # 'admin' or 'viewer'
     is_active_user = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    last_login = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

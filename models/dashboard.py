@@ -35,6 +35,20 @@ class Dashboard(db.Model):
             return f'{self.file_size / (1024 * 1024):.1f} MB'
 
     @property
+    def freshness(self):
+        if not self.uploaded_at:
+            return 'none'
+        now = datetime.now(timezone.utc)
+        uploaded = self.uploaded_at.replace(tzinfo=timezone.utc) if self.uploaded_at.tzinfo is None else self.uploaded_at
+        diff = (now - uploaded).days
+        if diff <= 7:
+            return 'fresh'
+        elif diff <= 30:
+            return 'aging'
+        else:
+            return 'stale'
+
+    @property
     def updated_display(self):
         if not self.uploaded_at:
             return 'Belum ada data'

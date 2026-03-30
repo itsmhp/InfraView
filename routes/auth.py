@@ -1,5 +1,7 @@
+from datetime import datetime, timezone
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
+from models import db
 from models.user import User
 
 auth_bp = Blueprint('auth', __name__)
@@ -17,6 +19,9 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and user.check_password(password) and user.is_active:
+            # Record previous login time for display, then update
+            user.last_login = datetime.now(timezone.utc)
+            db.session.commit()
             login_user(user, remember=True)
             next_page = request.args.get('next')
             flash(f'Selamat datang, {user.display_name}!', 'success')

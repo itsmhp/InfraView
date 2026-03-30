@@ -8,7 +8,7 @@ build/
 venv/
 .venv/
 
-# Instance
+# Instance / Database
 instance/
 *.db
 
@@ -20,15 +20,27 @@ instance/
 .idea/
 *.swp
 *.swo
+*.code-workspace
 
 # OS
 .DS_Store
 Thumbs.db
 desktop.ini
 
+# Claude / AI tools
+.claude/
+
 # Analysis docs (not needed in production)
 *_complete_analysis.md
 plan.md
+
+# Old documentation (replaced by README.md)
+QUICKSTART.md
+files/
+
+# Root-level assets (logos belong in static/img/)
+/*.svg
+/*.png
 
 # Existing local apps (not part of web app)
 laporan-cje0/
@@ -36,5 +48,6 @@ Laporan-RKA-IT/
 
 # Existing HTML files (root level, not managed by Flask)
 Laporan_CJE0_*.html
+Laporan_RKA_*.html
 Dashboard_*.html
 migrate_confluence.py

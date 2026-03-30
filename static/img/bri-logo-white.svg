@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" fill="white">
+  <!-- BRI Logo simplified - white version -->
+  <!-- Icon: rounded square with double chevron -->
+  <g>
+    <rect x="2" y="8" width="64" height="64" rx="14" ry="14" fill="none" stroke="white" stroke-width="5"/>
+    <path d="M22 24 L34 40 L22 56" fill="none" stroke="white" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M38 24 L50 40 L38 56" fill="none" stroke="white" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Text: BRI -->
+  <g>
+    <text x="78" y="58" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="52" fill="white">BRI</text>
+  </g>
+</svg>

@@ -27,9 +27,9 @@ DASHBOARDS = [
         'sort_order': 3,
     },
     {
-        'name': 'Kirim5 Pengadaan',
-        'slug': 'kirim5',
-        'description': 'Dashboard progress pengadaan PLO Group — Kirim 5',
+        'name': 'Tracking Pengadaan PLO',
+        'slug': 'tracking-plo',
+        'description': 'Dashboard tracking pengadaan PLO Group',
         'icon': '🚀',
         'sort_order': 4,
     },
@@ -67,7 +67,14 @@ def seed():
         else:
             print('[=] Viewer user already exists')
 
-        # Create dashboard slots
+        # Migrate old slug kirim5 -> tracking-plo
+        old_kirim5 = Dashboard.query.filter_by(slug='kirim5').first()
+        if old_kirim5:
+            old_kirim5.slug = 'tracking-plo'
+            db.session.commit()
+            print('[~] Renamed slug kirim5 -> tracking-plo')
+
+        # Create or update dashboard slots
         for d in DASHBOARDS:
             existing = Dashboard.query.filter_by(slug=d['slug']).first()
             if not existing:
@@ -75,7 +82,11 @@ def seed():
                 db.session.add(dashboard)
                 print(f'[+] Dashboard "{d["name"]}" created')
             else:
-                print(f'[=] Dashboard "{d["name"]}" already exists')
+                existing.name = d['name']
+                existing.description = d['description']
+                existing.icon = d['icon']
+                existing.sort_order = d['sort_order']
+                print(f'[~] Dashboard "{d["name"]}" updated')
 
         db.session.commit()
         print('\nSeed complete!')

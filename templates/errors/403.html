@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 — InfraView</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: {
+                bri: { 500: '#2563eb', 600: '#1a56db', 700: '#1a4b8c' }
+            }}}
+        }
+    </script>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="text-center">
+        <div class="text-8xl font-bold text-red-500 mb-4">403</div>
+        <h1 class="text-2xl font-semibold text-slate-800 mb-2">Akses Ditolak</h1>
+        <p class="text-slate-500 mb-8">Anda tidak memiliki izin untuk mengakses halaman ini.</p>
+        <a href="/" class="bg-bri-500 hover:bg-bri-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition shadow-sm">
+            Kembali ke Hub
+        </a>
+    </div>
+</body>
+</html>

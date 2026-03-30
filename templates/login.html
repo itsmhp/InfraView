@@ -2,12 +2,13 @@
 {% block title %}Login — InfraView{% endblock %}
 
 {% block content_noauth %}
-<div class="min-h-screen bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 flex items-center justify-center p-4">
+<div class="min-h-screen bg-gradient-to-br from-bri-600 via-bri-700 to-bri-800 flex items-center justify-center p-4">
     <div class="w-full max-w-md">
         <!-- Logo -->
         <div class="text-center mb-8">
+            <img src="{{ url_for('static', filename='img/bri-logo-full-white.svg') }}" alt="BRI" class="h-10 mx-auto mb-4">
             <h1 class="text-3xl font-bold text-white tracking-wide">InfraView</h1>
-            <p class="text-teal-200 text-sm mt-1">BRI IT Infrastructure Dashboard Hub</p>
+            <p class="text-bri-200 text-sm mt-1">by PIN</p>
         </div>
 
         <!-- Flash Messages -->
@@ -32,24 +33,24 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-600 mb-1">Username</label>
                     <input type="text" name="username" required autofocus
-                        class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
+                        class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-bri-500 focus:border-bri-500 outline-none transition"
                         placeholder="Masukkan username">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-600 mb-1">Password</label>
                     <input type="password" name="password" required
-                        class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
+                        class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-bri-500 focus:border-bri-500 outline-none transition"
                         placeholder="Masukkan password">
                 </div>
                 <button type="submit"
-                    class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                    class="w-full bg-bri-500 hover:bg-bri-600 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
                     Masuk
                 </button>
             </form>
         </div>
 
-        <p class="text-center text-teal-200 text-xs mt-6">
-            &copy; 2026 INF — IT DC Infrastructure & Operations Group
+        <p class="text-center text-bri-200 text-xs mt-6">
+            &copy; 2026 PIN — IT Infrastructure PMO
         </p>
     </div>
 </div>

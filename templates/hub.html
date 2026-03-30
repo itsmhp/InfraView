@@ -3,26 +3,90 @@
 
 {% block content %}
 <div class="p-6 lg:p-8">
-    <!-- Hub Header -->
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-800">Dashboard Hub</h1>
+    <!-- Welcome Message -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-800">Selamat datang, {{ current_user.display_name }} 👋</h1>
         <p class="text-slate-500 text-sm mt-1">Pilih dashboard untuk melihat data terbaru</p>
     </div>
 
+    <!-- KPI Summary Bar -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-bri-50 rounded-lg flex items-center justify-center text-bri-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            </div>
+            <div>
+                <p class="text-xs text-slate-400">Total Dashboard</p>
+                <p class="text-lg font-bold text-slate-800">{{ stats.total }}</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <p class="text-xs text-slate-400">Data Terbaru</p>
+                <p class="text-lg font-bold text-emerald-600">{{ stats.fresh }}</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div>
+                <p class="text-xs text-slate-400">Perlu Update</p>
+                <p class="text-lg font-bold text-amber-600">{{ stats.stale }}</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-bri-50 rounded-lg flex items-center justify-center text-bri-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            </div>
+            <div>
+                <p class="text-xs text-slate-400">Terisi Data</p>
+                <p class="text-lg font-bold text-slate-800">{{ stats.with_data }}/{{ stats.total }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Filter -->
+    <div class="mb-6 flex justify-end">
+        <div class="relative">
+            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="dash-search" placeholder="Cari dashboard..."
+                   class="w-full md:w-72 pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-bri-500 focus:border-bri-500 outline-none text-sm transition">
+        </div>
+    </div>
+
     <!-- Dashboard Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div id="dash-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {% for d in dashboards %}
         <a href="{{ url_for('main.view', slug=d.slug) }}"
-           class="group bg-white rounded-xl border border-slate-200 hover:border-teal-300 hover:shadow-lg transition-all duration-200 overflow-hidden">
+           data-name="{{ d.name|lower }}"
+           class="dash-card group bg-white rounded-xl border border-slate-200 hover:border-bri-300 hover:shadow-lg transition-all duration-200 overflow-hidden">
             <!-- Card Header -->
             <div class="p-5">
                 <div class="flex items-start justify-between mb-3">
                     <span class="text-3xl">{{ d.icon }}</span>
                     {% if d.has_content %}
-                    <span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full">
-                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                        Aktif
-                    </span>
+                        {% if d.freshness == 'fresh' %}
+                        <span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                            Terbaru
+                        </span>
+                        {% elif d.freshness == 'aging' %}
+                        <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-600 px-2 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                            7+ hari lalu
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 text-xs bg-red-50 text-red-500 px-2 py-1 rounded-full">
+                            <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                            30+ hari lalu
+                        </span>
+                        {% endif %}
                     {% else %}
                     <span class="inline-flex items-center gap-1 text-xs bg-slate-50 text-slate-400 px-2 py-1 rounded-full">
                         <span class="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
@@ -30,7 +94,7 @@
                     </span>
                     {% endif %}
                 </div>
-                <h3 class="font-semibold text-slate-800 group-hover:text-teal-700 transition-colors">{{ d.name }}</h3>
+                <h3 class="font-semibold text-slate-800 group-hover:text-bri-700 transition-colors">{{ d.name }}</h3>
                 <p class="text-sm text-slate-500 mt-1 line-clamp-2">{{ d.description }}</p>
             </div>
             <!-- Card Footer -->
@@ -44,6 +108,13 @@
         {% endfor %}
     </div>
 
+    <!-- No results message (hidden by default) -->
+    <div id="no-results" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">🔍</div>
+        <h3 class="text-lg font-medium text-slate-600">Tidak ditemukan</h3>
+        <p class="text-slate-400 text-sm mt-1">Coba kata kunci lain</p>
+    </div>
+
     {% if not dashboards %}
     <div class="text-center py-16">
         <div class="text-5xl mb-4">📊</div>
@@ -52,4 +123,26 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Search filter
+const searchInput = document.getElementById('dash-search');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        const cards = document.querySelectorAll('.dash-card');
+        let visible = 0;
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name') || '';
+            const match = !q || name.includes(q);
+            card.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        const noResults = document.getElementById('no-results');
+        if (noResults) noResults.classList.toggle('hidden', visible > 0);
+    });
+}
+</script>
 {% endblock %}

@@ -33,6 +33,26 @@ def upload(slug):
     dashboard = Dashboard.query.filter_by(slug=slug).first_or_404()
 
     if request.method == 'POST':
+        # Check for paste HTML method
+        html_paste = request.form.get('html_paste', '').strip()
+
+        if html_paste:
+            # Paste HTML method (DLP-friendly)
+            content_bytes = html_paste.encode('utf-8')
+            if len(content_bytes) > 10 * 1024 * 1024:
+                flash('Ukuran konten melebihi 10 MB.', 'error')
+                return redirect(request.url)
+
+            dashboard.html_content = html_paste
+            dashboard.file_size = len(content_bytes)
+            dashboard.uploaded_by = current_user.id
+            dashboard.uploaded_at = datetime.now(timezone.utc)
+            db.session.commit()
+
+            flash(f'Dashboard "{dashboard.name}" berhasil diupdate via paste!', 'success')
+            return redirect(url_for('admin.panel'))
+
+        # File upload method
         file = request.files.get('html_file')
 
         if not file or file.filename == '':
@@ -45,8 +65,8 @@ def upload(slug):
 
         content = file.read()
 
-        if len(content) > 5 * 1024 * 1024:
-            flash('Ukuran file melebihi 5 MB.', 'error')
+        if len(content) > 10 * 1024 * 1024:
+            flash('Ukuran file melebihi 10 MB.', 'error')
             return redirect(request.url)
 
         dashboard.html_content = content.decode('utf-8', errors='replace')

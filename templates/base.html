@@ -4,17 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}InfraView{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>IV</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        teal: {
-                            600: '#0D9488',
-                            700: '#0F766E',
-                            800: '#115E59',
-                        }
+                        bri: {
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe',
+                            300: '#93c5fd', 400: '#60a5fa', 500: '#2563eb',
+                            600: '#1a56db', 700: '#1a4b8c', 800: '#09508d', 900: '#0a3266',
+                        },
+                        accent: { 400: '#f59e0b', 500: '#f17b25', 600: '#ea580c' }
                     }
                 }
             }
@@ -26,7 +28,7 @@
 <body class="bg-slate-100 text-slate-800 min-h-screen">
     {% if current_user.is_authenticated %}
     <!-- Header -->
-    <header class="bg-gradient-to-r from-teal-600 to-teal-700 text-white px-6 py-3 sticky top-0 z-50 shadow-md">
+    <header class="bg-gradient-to-r from-bri-600 to-bri-700 text-white px-6 py-3 sticky top-0 z-50 shadow-md">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <button id="sidebar-toggle" class="lg:hidden p-1 hover:bg-white/10 rounded">
@@ -35,13 +37,28 @@
                     </svg>
                 </button>
                 <a href="{{ url_for('main.hub') }}" class="flex items-center gap-2 hover:opacity-90">
-                    <span class="text-xl font-bold tracking-wide">InfraView</span>
-                    <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">INF</span>
+                    <img src="{{ url_for('static', filename='img/bri-logo-mark-only.svg') }}" alt="BRI" class="h-7 w-7">
+                    <span class="text-xl font-bold tracking-wide hidden sm:inline">InfraView</span>
+                    <span class="text-xs bg-accent-500/90 text-white px-2 py-0.5 rounded-full font-medium">by PIN</span>
                 </a>
             </div>
             <div class="flex items-center gap-4">
                 <span class="text-sm opacity-90 hidden sm:inline" id="clock"></span>
                 <div class="flex items-center gap-2">
+                    <!-- Keyboard shortcut help -->
+                    <div class="relative" id="shortcut-help-wrap">
+                        <button onclick="document.getElementById('shortcut-modal').classList.toggle('hidden')" class="text-xs bg-white/10 hover:bg-white/20 w-7 h-7 rounded-full flex items-center justify-center transition" title="Keyboard shortcuts">?</button>
+                        <div id="shortcut-modal" class="hidden absolute right-0 top-10 bg-white text-slate-700 rounded-xl shadow-2xl border border-slate-200 p-4 w-64 z-50 text-xs">
+                            <h4 class="font-semibold text-sm mb-2 text-slate-800">Keyboard Shortcuts</h4>
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between"><span>Ke Hub</span><kbd class="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">Alt+H</kbd></div>
+                                <div class="flex justify-between"><span>Refresh Dashboard</span><kbd class="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">Alt+R</kbd></div>
+                                <div class="flex justify-between"><span>Fullscreen</span><kbd class="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">Alt+F</kbd></div>
+                                <div class="flex justify-between"><span>Print</span><kbd class="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">Alt+P</kbd></div>
+                                <div class="flex justify-between"><span>Tutup Sidebar</span><kbd class="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">Esc</kbd></div>
+                            </div>
+                        </div>
+                    </div>
                     <span class="text-sm hidden sm:inline">{{ current_user.display_name }}</span>
                     {% if current_user.is_admin %}
                     <a href="{{ url_for('admin.panel') }}" class="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition">Admin</a>
@@ -54,19 +71,26 @@
 
     <div class="flex min-h-[calc(100vh-52px)]">
         <!-- Sidebar -->
-        <aside id="sidebar" class="w-60 bg-white border-r border-slate-200 shadow-sm fixed lg:static inset-y-0 left-0 top-[52px] z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
+        <aside id="sidebar" class="sidebar-expanded bg-white border-r border-slate-200 shadow-sm fixed lg:static inset-y-0 left-0 top-[52px] z-40 transform -translate-x-full lg:translate-x-0 transition-all duration-200">
             <div class="py-4">
-                <div class="px-5 py-2 text-xs font-bold uppercase text-slate-400 tracking-wider">Dashboards</div>
+                <!-- Collapse toggle (desktop only) -->
+                <button id="sidebar-collapse-btn" class="hidden lg:flex w-full px-4 py-2 items-center justify-end text-slate-400 hover:text-bri-600 transition" title="Collapse sidebar">
+                    <svg id="collapse-icon" class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <div class="px-5 py-2 text-xs font-bold uppercase text-slate-400 tracking-wider sidebar-label">Dashboards</div>
                 {% set dashboards_sidebar = get_sidebar_dashboards() if get_sidebar_dashboards is defined else [] %}
                 {% for d in dashboards_sidebar %}
                 <a href="{{ url_for('main.view', slug=d.slug) }}"
-                   class="sidebar-item flex items-center gap-3 px-5 py-3 border-l-3 border-transparent hover:bg-slate-50 hover:border-teal-500 transition-all text-sm {{ 'bg-teal-50 border-teal-600 text-teal-700 font-medium' if request.path == '/dashboard/' + d.slug else 'text-slate-600' }}">
-                    <span>{{ d.icon }}</span>
-                    <span>{{ d.name }}</span>
+                   class="sidebar-item flex items-center gap-3 px-5 py-3 border-l-3 border-transparent hover:bg-slate-50 hover:border-bri-500 transition-all text-sm {{ 'bg-bri-50 border-bri-600 text-bri-700 font-medium' if request.path == '/dashboard/' + d.slug else 'text-slate-600' }}"
+                   title="{{ d.name }}">
+                    <span class="sidebar-icon text-lg">{{ d.icon }}</span>
+                    <span class="sidebar-label">{{ d.name }}</span>
                     {% if d.has_content %}
-                    <span class="ml-auto w-2 h-2 bg-emerald-400 rounded-full" title="Data tersedia"></span>
+                    <span class="sidebar-label ml-auto w-2 h-2 bg-emerald-400 rounded-full" title="Data tersedia"></span>
                     {% else %}
-                    <span class="ml-auto w-2 h-2 bg-slate-300 rounded-full" title="Belum ada data"></span>
+                    <span class="sidebar-label ml-auto w-2 h-2 bg-slate-300 rounded-full" title="Belum ada data"></span>
                     {% endif %}
                 </a>
                 {% endfor %}
@@ -124,6 +148,25 @@
         const sidebarToggle = document.getElementById('sidebar-toggle');
         if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
 
+        // Desktop sidebar collapse
+        const collapseBtn = document.getElementById('sidebar-collapse-btn');
+        if (collapseBtn) {
+            const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+            if (collapsed) {
+                const s = document.getElementById('sidebar');
+                s.classList.replace('sidebar-expanded', 'sidebar-collapsed');
+            }
+            collapseBtn.addEventListener('click', function() {
+                const s = document.getElementById('sidebar');
+                const isCollapsed = s.classList.contains('sidebar-collapsed');
+                s.classList.replace(
+                    isCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded',
+                    isCollapsed ? 'sidebar-expanded' : 'sidebar-collapsed'
+                );
+                localStorage.setItem('sidebar-collapsed', !isCollapsed);
+            });
+        }
+
         // Auto-dismiss flash messages
         setTimeout(() => {
             document.querySelectorAll('.flash-msg').forEach(el => {
@@ -132,6 +175,25 @@
                 setTimeout(() => el.remove(), 300);
             });
         }, 4000);
+
+        // Global keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey && e.key === 'h') { e.preventDefault(); window.location.href = '{{ url_for("main.hub") }}'; }
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                const modal = document.getElementById('shortcut-modal');
+                if (modal && !modal.classList.contains('hidden')) modal.classList.add('hidden');
+                else if (sidebar && !sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) toggleSidebar();
+            }
+        });
+
+        // Close shortcut modal on outside click
+        document.addEventListener('click', function(e) {
+            const wrap = document.getElementById('shortcut-help-wrap');
+            const modal = document.getElementById('shortcut-modal');
+            if (wrap && modal && !wrap.contains(e.target)) modal.classList.add('hidden');
+        });
     </script>
     {% block scripts %}{% endblock %}
 </body>

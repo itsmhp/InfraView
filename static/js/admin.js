@@ -53,9 +53,9 @@
             return;
         }
 
-        // Validate size (5 MB)
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Ukuran file melebihi 5 MB.');
+        // Validate size (10 MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Ukuran file melebihi 10 MB.');
             return;
         }
 
