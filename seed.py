@@ -39,6 +39,16 @@ DASHBOARDS = [
 def seed():
     app = create_app()
     with app.app_context():
+        # Ensure schema is up-to-date (idempotent migrations)
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            conn.execute(text("""
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
+            """))
+            conn.commit()
+            print('[+] Column last_login ensured')
+
         # Create admin if not exists
         admin = User.query.filter_by(username='admin').first()
         if not admin:
