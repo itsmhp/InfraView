@@ -40,14 +40,16 @@ def seed():
     app = create_app()
     with app.app_context():
         # Ensure schema is up-to-date (idempotent migrations)
-        from sqlalchemy import text
-        with db.engine.connect() as conn:
-            conn.execute(text("""
-                ALTER TABLE users
-                ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
-            """))
-            conn.commit()
-            print('[+] Column last_login ensured')
+        from sqlalchemy import text, inspect
+        inspector = inspect(db.engine)
+        cols = [c['name'] for c in inspector.get_columns('users')]
+        if 'last_login' not in cols:
+            with db.engine.connect() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN last_login TIMESTAMP;"))
+                conn.commit()
+            print('[+] Column last_login added')
+        else:
+            print('[=] Column last_login already exists')
 
         # Create admin if not exists
         admin = User.query.filter_by(username='admin').first()
