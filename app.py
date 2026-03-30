@@ -50,7 +50,7 @@ def create_app():
     def forbidden(e):
         return render_template('errors/403.html'), 403
 
-    # Create tables
+    # Create tables + seed
     with app.app_context():
         db.create_all()
         # Idempotent migration: add columns that db.create_all() won't add to existing tables
@@ -58,6 +58,12 @@ def create_app():
         with db.engine.connect() as conn:
             conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;"))
             conn.commit()
+        # Seed default users if not exist
+        if not User.query.filter_by(username='admin').first():
+            admin = User(username='admin', display_name='Administrator', role='admin')
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
 
     return app
 
