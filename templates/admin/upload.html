@@ -46,6 +46,7 @@
             <!-- Tab: Upload File -->
             <div id="panel-file">
                 <form method="POST" enctype="multipart/form-data" id="upload-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div id="drop-zone"
                          class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-bri-400 hover:bg-bri-50/30 transition-all cursor-pointer">
                         <div id="drop-icon" class="text-4xl mb-3">📄</div>
@@ -81,6 +82,7 @@
             <!-- Tab: Paste HTML -->
             <div id="panel-paste" class="hidden">
                 <form method="POST" id="paste-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <p class="text-xs text-slate-400 mb-2">
                             💡 Gunakan metode ini jika upload file terkena DLP. Buka file HTML dengan text editor, lalu copy-paste seluruh isinya ke sini.

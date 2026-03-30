@@ -22,6 +22,7 @@
                         <th class="px-5 py-3 font-medium">Nama</th>
                         <th class="px-5 py-3 font-medium">Role</th>
                         <th class="px-5 py-3 font-medium">Status</th>
+                        <th class="px-5 py-3 font-medium">Login Terakhir</th>
                         <th class="px-5 py-3 font-medium text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -48,16 +49,25 @@
                             </span>
                             {% endif %}
                         </td>
+                        <td class="px-5 py-3 text-xs text-slate-500">
+                            {% if u.last_login %}
+                                {{ (u.last_login|wib).strftime('%d %b %Y, %H:%M') }} WIB
+                            {% else %}
+                                <span class="text-slate-300 italic">Belum pernah</span>
+                            {% endif %}
+                        </td>
                         <td class="px-5 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
                                 {% if u.id != current_user.id %}
                                 <form method="POST" action="{{ url_for('admin.toggle_user', id=u.id) }}" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded transition">
                                         {{ 'Nonaktifkan' if u.is_active else 'Aktifkan' }}
                                     </button>
                                 </form>
                                 {% endif %}
                                 <form method="POST" action="{{ url_for('admin.reset_password', id=u.id) }}" class="inline reset-pw-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="new_password" class="reset-pw-input">
                                     <button type="button" class="text-xs text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded transition reset-pw-btn">
                                         Reset PW

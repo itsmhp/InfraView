@@ -3,7 +3,7 @@ from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from models import db
-from models.user import User
+from models.user import User, validate_password
 from models.dashboard import Dashboard
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -163,6 +163,11 @@ def new_user():
             flash('Username dan password wajib diisi.', 'error')
             return redirect(request.url)
 
+        error = validate_password(password)
+        if error:
+            flash(error, 'error')
+            return redirect(request.url)
+
         if User.query.filter_by(username=username).first():
             flash(f'Username "{username}" sudah digunakan.', 'error')
             return redirect(request.url)
@@ -207,6 +212,7 @@ def reset_password(id):
         return redirect(url_for('admin.users'))
 
     user.set_password(new_password)
+    user.must_change_password = True
     db.session.commit()
-    flash(f'Password user "{user.username}" berhasil direset.', 'success')
+    flash(f'Password user "{user.username}" berhasil direset. User harus ganti password saat login.', 'success')
     return redirect(url_for('admin.users'))

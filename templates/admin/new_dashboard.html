@@ -12,6 +12,7 @@
             <h2 class="font-semibold text-slate-800">Tambah Dashboard Baru</h2>
         </div>
         <form method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label class="block text-sm font-medium text-slate-600 mb-1">Nama Dashboard *</label>
                 <input type="text" name="name" required placeholder="e.g. CJE0 Budget Monitoring"

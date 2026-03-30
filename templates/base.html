@@ -121,6 +121,25 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+    <!-- Inactivity Timeout Modal -->
+    <div id="timeout-modal" class="hidden fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center">
+            <div class="text-4xl mb-3">&#9200;</div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">Sesi Tidak Aktif</h3>
+            <p class="text-sm text-slate-500 mb-1">Anda akan otomatis logout dalam</p>
+            <p class="text-3xl font-bold text-red-600 mb-4" id="timeout-countdown">60</p>
+            <p class="text-xs text-slate-400 mb-4">detik karena tidak ada aktivitas.</p>
+            <div class="flex gap-3 justify-center">
+                <button id="timeout-continue" class="px-5 py-2 bg-bri-500 hover:bg-bri-600 text-white text-sm rounded-lg transition font-medium">
+                    Lanjutkan
+                </button>
+                <button id="timeout-logout" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm rounded-lg transition">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
     {% else %}
     {% block content_noauth %}{% endblock %}
     {% endif %}
@@ -194,6 +213,67 @@
             const modal = document.getElementById('shortcut-modal');
             if (wrap && modal && !wrap.contains(e.target)) modal.classList.add('hidden');
         });
+
+        // Inactivity auto-logout (10 min idle + 60s countdown)
+        (function() {
+            const IDLE_LIMIT = 10 * 60 * 1000;  // 10 minutes
+            const COUNTDOWN_SECS = 60;
+            const LOGOUT_URL = '{{ url_for("auth.logout") }}';
+
+            let idleTimer = null;
+            let countdownTimer = null;
+            let countdownValue = COUNTDOWN_SECS;
+
+            const modal = document.getElementById('timeout-modal');
+            const countdownEl = document.getElementById('timeout-countdown');
+            const continueBtn = document.getElementById('timeout-continue');
+            const logoutBtn = document.getElementById('timeout-logout');
+
+            if (!modal) return;
+
+            function resetIdleTimer() {
+                if (!modal.classList.contains('hidden')) return;
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(showWarning, IDLE_LIMIT);
+            }
+
+            function showWarning() {
+                countdownValue = COUNTDOWN_SECS;
+                countdownEl.textContent = countdownValue;
+                modal.classList.remove('hidden');
+                countdownTimer = setInterval(function() {
+                    countdownValue--;
+                    countdownEl.textContent = countdownValue;
+                    if (countdownValue <= 0) {
+                        clearInterval(countdownTimer);
+                        window.location.href = LOGOUT_URL;
+                    }
+                }, 1000);
+            }
+
+            function dismissWarning() {
+                modal.classList.add('hidden');
+                clearInterval(countdownTimer);
+                resetIdleTimer();
+            }
+
+            continueBtn.addEventListener('click', dismissWarning);
+            logoutBtn.addEventListener('click', function() {
+                window.location.href = LOGOUT_URL;
+            });
+
+            ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'].forEach(function(evt) {
+                document.addEventListener(evt, resetIdleTimer, { passive: true });
+            });
+
+            // Detect iframe focus as activity (for dashboard view)
+            setInterval(function() {
+                var iframe = document.getElementById('dashboard-frame');
+                if (iframe && document.activeElement === iframe) resetIdleTimer();
+            }, 30000);
+
+            resetIdleTimer();
+        })();
     </script>
     {% block scripts %}{% endblock %}
 </body>
