@@ -67,6 +67,18 @@ def create_app():
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
+        # Seed default dashboards if not exist
+        from models.dashboard import Dashboard
+        _dashboards = [
+            {'name': 'CJE0 Budget Monitoring', 'slug': 'cje0', 'description': 'Real-time budget tracking dari SAP CJE0 — OPEX, CAPEX, Satelit', 'icon': '💰', 'sort_order': 1},
+            {'name': 'Laporan RKA IT', 'slug': 'rka', 'description': 'Laporan Realisasi Anggaran TI — bulanan & kumulatif', 'icon': '📋', 'sort_order': 2},
+            {'name': 'Status Pengadaan', 'slug': 'pengadaan', 'description': 'Analisis status pengadaan INF — pipeline & cross-tab', 'icon': '📦', 'sort_order': 3},
+            {'name': 'Tracking Pengadaan PLO', 'slug': 'tracking-plo', 'description': 'Dashboard tracking pengadaan PLO Group', 'icon': '🚀', 'sort_order': 4},
+        ]
+        for d in _dashboards:
+            if not Dashboard.query.filter_by(slug=d['slug']).first():
+                db.session.add(Dashboard(**d))
+        db.session.commit()
 
     return app
 
