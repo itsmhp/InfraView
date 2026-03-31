@@ -5,6 +5,7 @@ from flask_login import login_required, current_user
 from models import db
 from models.user import User, validate_password
 from models.dashboard import Dashboard
+from utils.crypto import encrypt_content
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -43,7 +44,7 @@ def upload(slug):
                 flash('Ukuran konten melebihi 10 MB.', 'error')
                 return redirect(request.url)
 
-            dashboard.html_content = html_paste
+            dashboard.html_content = encrypt_content(html_paste)
             dashboard.file_size = len(content_bytes)
             dashboard.uploaded_by = current_user.id
             dashboard.uploaded_at = datetime.now(timezone.utc)
@@ -69,7 +70,7 @@ def upload(slug):
             flash('Ukuran file melebihi 10 MB.', 'error')
             return redirect(request.url)
 
-        dashboard.html_content = content.decode('utf-8', errors='replace')
+        dashboard.html_content = encrypt_content(content.decode('utf-8', errors='replace'))
         dashboard.file_size = len(content)
         dashboard.uploaded_by = current_user.id
         dashboard.uploaded_at = datetime.now(timezone.utc)

@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,6 +16,10 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_DURATION = 86400  # 1 day (seconds) instead of Flask-Login default 365 days
     REMEMBER_COOKIE_HTTPONLY = True
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=11)
+
+    # Encryption key for dashboard content (falls back to SECRET_KEY)
+    ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
 
     # Fix for Render PostgreSQL URI (postgres:// -> postgresql://)
     if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):

@@ -1,5 +1,5 @@
 from datetime import timedelta
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for, request, session
 from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect
 from config import Config
@@ -70,6 +70,12 @@ def create_app():
         response.headers['X-XSS-Protection'] = '1; mode=block'
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         return response
+
+    # Refresh server-side session expiry on every request
+    @app.before_request
+    def refresh_session():
+        if current_user.is_authenticated:
+            session.permanent = True
 
     # Force password change if required
     @app.before_request

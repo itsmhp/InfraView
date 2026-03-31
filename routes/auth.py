@@ -1,7 +1,7 @@
 import time
 from collections import defaultdict
 from datetime import datetime, timezone
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 from models import db
 from models.user import User, validate_password
@@ -43,6 +43,7 @@ def login():
             user.last_login = datetime.now(timezone.utc)
             db.session.commit()
             login_user(user, remember=True)
+            session.permanent = True
             next_page = request.args.get('next')
             flash(f'Selamat datang, {user.display_name}!', 'success')
             return redirect(next_page or url_for('main.hub'))

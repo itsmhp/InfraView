@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, Response, abort
 from flask_login import login_required, current_user
 from models.dashboard import Dashboard
+from utils.crypto import decrypt_content
 
 main_bp = Blueprint('main', __name__)
 
@@ -39,4 +40,4 @@ def raw(slug):
     dashboard = Dashboard.query.filter_by(slug=slug, is_active=True).first_or_404()
     if not dashboard.has_content:
         abort(404)
-    return Response(dashboard.html_content, mimetype='text/html')
+    return Response(decrypt_content(dashboard.html_content), mimetype='text/html')

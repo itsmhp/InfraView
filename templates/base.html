@@ -214,65 +214,84 @@
             if (wrap && modal && !wrap.contains(e.target)) modal.classList.add('hidden');
         });
 
-        // Inactivity auto-logout (10 min idle + 60s countdown)
+        // Inactivity auto-logout (10 min idle + 60s countdown, survives sleep/hibernate)
         (function() {
-            const IDLE_LIMIT = 10 * 60 * 1000;  // 10 minutes
-            const COUNTDOWN_SECS = 60;
-            const LOGOUT_URL = '{{ url_for("auth.logout") }}';
+            var IDLE_MS = 10 * 60 * 1000;      // 10 minutes
+            var WARN_MS = 60 * 1000;            // 60 second countdown
+            var TOTAL_MS = IDLE_MS + WARN_MS;   // 11 min = instant logout threshold
+            var LOGOUT_URL = '{{ url_for("auth.logout") }}';
 
-            let idleTimer = null;
-            let countdownTimer = null;
-            let countdownValue = COUNTDOWN_SECS;
-
-            const modal = document.getElementById('timeout-modal');
-            const countdownEl = document.getElementById('timeout-countdown');
-            const continueBtn = document.getElementById('timeout-continue');
-            const logoutBtn = document.getElementById('timeout-logout');
-
+            var modal = document.getElementById('timeout-modal');
+            var countdownEl = document.getElementById('timeout-countdown');
+            var continueBtn = document.getElementById('timeout-continue');
+            var logoutBtn = document.getElementById('timeout-logout');
             if (!modal) return;
 
-            function resetIdleTimer() {
-                if (!modal.classList.contains('hidden')) return;
-                clearTimeout(idleTimer);
-                idleTimer = setTimeout(showWarning, IDLE_LIMIT);
+            var lastActivity = Date.now();
+            var warningShown = false;
+
+            function recordActivity() {
+                if (warningShown) return;
+                lastActivity = Date.now();
             }
 
-            function showWarning() {
-                countdownValue = COUNTDOWN_SECS;
-                countdownEl.textContent = countdownValue;
-                modal.classList.remove('hidden');
-                countdownTimer = setInterval(function() {
-                    countdownValue--;
-                    countdownEl.textContent = countdownValue;
-                    if (countdownValue <= 0) {
-                        clearInterval(countdownTimer);
+            function checkIdle() {
+                var elapsed = Date.now() - lastActivity;
+
+                if (!warningShown) {
+                    // Not yet warning — check if we should warn or instant-logout
+                    if (elapsed >= TOTAL_MS) {
+                        // Slept through the entire warning window → instant logout
                         window.location.href = LOGOUT_URL;
+                        return;
                     }
-                }, 1000);
+                    if (elapsed >= IDLE_MS) {
+                        // Show warning popup
+                        warningShown = true;
+                        modal.classList.remove('hidden');
+                    }
+                }
+
+                if (warningShown) {
+                    // Update countdown based on real wall-clock time
+                    var remaining = Math.ceil((TOTAL_MS - elapsed) / 1000);
+                    if (remaining <= 0) {
+                        window.location.href = LOGOUT_URL;
+                        return;
+                    }
+                    countdownEl.textContent = remaining;
+                }
             }
 
-            function dismissWarning() {
+            function dismiss() {
+                warningShown = false;
+                lastActivity = Date.now();
                 modal.classList.add('hidden');
-                clearInterval(countdownTimer);
-                resetIdleTimer();
             }
 
-            continueBtn.addEventListener('click', dismissWarning);
+            continueBtn.addEventListener('click', dismiss);
             logoutBtn.addEventListener('click', function() {
                 window.location.href = LOGOUT_URL;
             });
 
+            // Track user activity
             ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'].forEach(function(evt) {
-                document.addEventListener(evt, resetIdleTimer, { passive: true });
+                document.addEventListener(evt, recordActivity, { passive: true });
             });
 
             // Detect iframe focus as activity (for dashboard view)
             setInterval(function() {
                 var iframe = document.getElementById('dashboard-frame');
-                if (iframe && document.activeElement === iframe) resetIdleTimer();
+                if (iframe && document.activeElement === iframe) recordActivity();
             }, 30000);
 
-            resetIdleTimer();
+            // Check idle every 2 seconds (survives timer drift after sleep)
+            setInterval(checkIdle, 2000);
+
+            // Immediate check when tab becomes visible (after sleep/wake)
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) checkIdle();
+            });
         })();
     </script>
     {% block scripts %}{% endblock %}
